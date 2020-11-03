@@ -1,0 +1,26 @@
+.sf-table {
+  max-width: 100%;
+
+  tr:first-child {
+    font-weight: bold;
+  }
+  td, th {
+    text-align: center;
+    padding: .1rem .2rem;
+  }
+  .jsf-valid {
+    background-color: green;
+  }
+  .jsf-invalid {
+    background-color: red;
+  }
+  .sf-table-row {
+    &.is--not-highlighted {
+      font-weight: normal !important;
+    }
+  }
+
+  input {
+
+  }
+}

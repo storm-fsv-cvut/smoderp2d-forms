@@ -1,0 +1,13 @@
+.sf-button {
+  display: inline-block;
+  margin: 0; padding: .2rem .5rem;
+  background-color: yellow;
+  cursor: pointer;
+  border-radius: .3rem;
+
+  &.jsf-disabled {
+    background-color: rgb(240,240,240);
+    cursor: default !important;
+    color: rgb(190,190,190);
+  }
+}
