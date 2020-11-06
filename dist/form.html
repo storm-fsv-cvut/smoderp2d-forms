@@ -39,12 +39,11 @@
         <th>Poměr</th>
         <th>Ochranné opratření</th>
         <th>Půda</th>
+        <th></th>
       </tr>
     </table>
 
     <div id="jsf-section-add" class="sf-button">Přidat řádek</div>
-
-    <!--<div id="jsf-postman" class="sf-button">Spočítej</div>-->
 
     <div id="jsf-postman" class="sf-button">Spočítej</div>
 
@@ -91,6 +90,25 @@
       <div class="sf-modal__shadow jsf-modal-closer"></div>
     </div>
 
+    <br />
+
+    <div style="width: 1200px; max-height: 800px">
+      <canvas id="jsf-surfaceVolRunoff"></canvas>
+    </div>
+
+    <br />
+
+    <div style="width: 1200px; max-height: 800px">
+      <canvas id="jsf-surfaceChartTwo"></canvas>
+    </div>
+
+    <br />
+
+    <div style="width: 1200px; max-height: 800px">
+      <canvas id="jsf-profileChartOne"></canvas>
+    </div>
+
+    <script src="js/Chart.bundle.min.js"></script>
     <script src="js/smoderpForm.js"></script>
   </body>
 </html>

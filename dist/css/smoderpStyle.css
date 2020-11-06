@@ -1,3 +1,34 @@
+@font-face {
+  font-family: 'icomoon';
+  src: url("../fonts/icomoon.eot?ok8ez3");
+  src: url("../fonts/icomoon.eot?ok8ez3#iefix") format("embedded-opentype"), url("../fonts/icomoon.ttf?ok8ez3") format("truetype"), url("../fonts/icomoon.woff?ok8ez3") format("woff"), url("../fonts/icomoon.svg?ok8ez3#icomoon") format("svg");
+  font-weight: normal;
+  font-style: normal;
+  font-display: block; }
+[class^="icon-"], [class*=" icon-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'icomoon' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale; }
+
+.icon-cog:before {
+  content: "\e994"; }
+
+.icon-cross:before {
+  color: red;
+  content: "\ea0f"; }
+
+.icon-checkmark:before {
+  color: lime;
+  content: "\ea10"; }
+
 .sf-button {
   display: inline-block;
   margin: 0;
@@ -18,29 +49,28 @@
     text-align: center;
     padding: .1rem .2rem; }
   .sf-table .jsf-valid {
-    background-color: green; }
+    background-color: rgba(0, 255, 0, 0.05); }
+    .sf-table .jsf-valid .icon-checkmark {
+      display: block; }
+    .sf-table .jsf-valid .icon-cross {
+      display: none; }
   .sf-table .jsf-invalid {
-    background-color: red; }
+    background-color: rgba(255, 0, 0, 0.05); }
+    .sf-table .jsf-invalid .icon-checkmark {
+      display: none; }
+    .sf-table .jsf-invalid .icon-cross {
+      display: block; }
   .sf-table .sf-table-row.is--not-highlighted {
     font-weight: normal !important; }
 
 .sf-modal {
   z-index: 999;
   display: none;
-  -webkit-box-orient: horizontal;
-  -webkit-box-direction: normal;
-      -ms-flex-direction: row;
-          flex-direction: row;
-  -ms-flex-wrap: nowrap;
-      flex-wrap: nowrap;
-  -webkit-box-pack: center;
-      -ms-flex-pack: center;
-          justify-content: center;
-  -webkit-box-align: center;
-      -ms-flex-align: center;
-          align-items: center;
-  -ms-flex-line-pack: center;
-      align-content: center;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
+  align-items: center;
+  align-content: center;
   position: fixed;
   top: 0;
   right: 0;
@@ -49,8 +79,6 @@
   .sf-modal.jsf-closed {
     display: none; }
   .sf-modal.jsf-open {
-    display: -webkit-box;
-    display: -ms-flexbox;
     display: flex; }
   .sf-modal__content {
     background-color: white;

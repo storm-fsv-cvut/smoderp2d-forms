@@ -1,22 +1,22 @@
 (function () {
   var sF = {
     places: 2, // počet desetinných míst používaných čísel
-    endpointUrl: 'http://rain1.fsv.cvut.cz:8080/services/wps/', //'http://geo102.fsv.cvut.cz:80/services/yfsgwps', //'http://geo102.fsv.cvut.cz/services/yfsgwps', //'response.xml', //'https://rain1.fsv.cvut.cz/services/wps',
+    endpointUrl: 'https://rain1.fsv.cvut.cz:4444/services/wps/',//'http://rain1.fsv.cvut.cz:8080/services/wps/', //'http://geo102.fsv.cvut.cz:80/services/yfsgwps', //'http://geo102.fsv.cvut.cz/services/yfsgwps', //'response.xml', //'https://rain1.fsv.cvut.cz/services/wps',
     userRainFalls: [],
     fifteenRainFallValue: null,
     globalColumnTexts: {
       'measures': ['Název','Kód','Drsnost podle Maninga','Zachycené množství vody opatřením [mm]','Poměr zachycení [-]','Povrchová retence [mm]','Maximální tečné napětí [Pa]', 'Maximální rychlost [m/s)]'],
-      'surfaces': ['Název','Kód','ks','s','b','X','Y']
+      'surfaces': ['Název','Kód','k','s','b','x','y']
     },
     globalColumnNames: {
       'measures': ['name','code','n','pi','ppl','ret','tau','v'],
-      'surfaces': ['name','code','ks','s','b','X','Y']
+      'surfaces': ['name','code','k','s','b','x','y']
     },
     globalData: {
       'measures': {
         0: {
           'name': 'Bez opatření',
-          'code': 'none',
+          'code': 'NON',
           'n': 0,
           'pi': 0,
           'ppl': 0,
@@ -26,7 +26,7 @@
         },
         1: {
           'name': 'Geotextilie',
-          'code': 'geo',
+          'code': 'GEO',
           'n': 0.0035,
           'pi': 5,
           'ppl': 0.2,
@@ -36,7 +36,7 @@
         },
         2: {
           'name': 'PVC',
-          'code': 'pvc',
+          'code': 'PVC',
           'n': 0.25,
           'pi': 0.1,
           'ppl': 0.5,
@@ -49,29 +49,29 @@
         0: {
           'name': 'Hlinitá',
           'code': 'HH',
-          'ks': 3,
+          'k': 3,
           's': 0.000000000001,
           'b': 0.52,
-          'X': 10.3,
-          'Y': 15.1
+          'x': 10.3,
+          'y': 15.1
         },
         1: {
           'name': 'Hlinitopísčitá',
           'code': 'HP',
-          'ks': 0.000000000001,
+          'k': 0.000000000001,
           's': 0.000000000001,
           'b': 0.52,
-          'X': 10.3,
-          'Y': 15.1
+          'x': 10.3,
+          'y': 15.1
         },
         2: {
           'name': 'Hlininá (USDA)',
           'code': 'HUSD',
-          'ks': 0.000000000001,
+          'k': 0.000000000001,
           's': 0.000000000001,
           'b': 0.52,
-          'X': 10.3,
-          'Y': 15.1
+          'x': 10.3,
+          'y': 15.1
         }
       }
     },
@@ -222,13 +222,18 @@
               input = null,
               name = null,
               inputName = null,
+              inputValue = null,
               newObject = new Object();
 
           for (var i = 0; i < sF.globalColumnNames[code].length; i++) {
             name = sF.globalColumnNames[code][i];
             inputName = code + '-' + name;
             input = document.getElementsByName(inputName)[0];
-            newObject[sF.globalColumnNames[code][i]] = input.value;
+            inputValue = input.value;
+            if (!isNaN(inputValue)) {
+              inputValue = parseFloat(inputValue);
+            }
+            newObject[sF.globalColumnNames[code][i]] = inputValue;
           }
 
           sF.globalData[code][sF.meSu.counters[code]] = newObject;
@@ -571,6 +576,11 @@
           cell = row.insertCell(5);
           sF.section.addSelect(cell,'surfaces');
 
+          cell = row.insertCell(6);
+          cell.innerHTML = '<span class="jsf-status-row"><span class="icon-checkmark"></span><span class="icon-cross"></span></span>';
+
+          sF.addClass(row,'jsf-invalid');
+
           sF.section.counter++;
         }
       },
@@ -875,7 +885,6 @@
                     sF.rainfall.initialized = true;
 
                     sF.rainfall.fillUserValues();
-                    //sF.rainfall.addRow(true);
                   } else {
                     console.log('Error: some rainfall button missing.');
                   }
@@ -895,11 +904,270 @@
       }
     },
 
+    outputs: {
+      accepted: false,
+      profileCsvData: '',
+      hydrogramCsvData: '',
+      hdgTime: [],
+      hdgDeltaTime: [],
+      hdgRain: [],
+      hdgTotalWaterLevel: [],
+      hdgSurfaceFlow: [],
+      hdgSurfaceVolRunoff: [],
+      prfLength: [],
+      prfSoilveg: [],
+      prfMaximalSrfFlow: [],
+      prfTotalRunoff: [],
+      prfMaxSrfRunoffVelocity: [],
+      prfMaxTangentialStress: [],
+      prfRillRunoff: []
+    },
+
+    charts: {
+      hdrChartOne: null,
+      hdrChartTwo: null,
+      prfChartOne: null,
+
+      generateData: function() {
+        if (sF.outputs.accepted) {
+          var row = [],
+              cell = [];
+
+          sF.outputs.hdgTime = [];
+          sF.outputs.hdgDeltaTime = [];
+          sF.outputs.hdgRain = [];
+          sF.outputs.hdgTotalWaterLevel = [];
+          sF.outputs.hdgSurfaceFlow = [];
+          sF.outputs.hdgSurfaceVolRunoff = [];
+          sF.outputs.prfLength = [];
+          sF.outputs.prfSoilveg = [];
+          sF.outputs.prfMaximalSrfFlow = [];
+          sF.outputs.prfTotalRunoff = [];
+          sF.outputs.prfMaxSrfRunoffVelocity = [];
+          sF.outputs.prfMaxTangentialStress = [];
+          sF.outputs.prfRillRunoff = [];
+
+          row = sF.outputs.hydrogramCsvData.split('\n');
+          for (var i = 1; i < row.length; i++) {
+            cell = row[i].split(',');
+            sF.outputs.hdgTime.push(cell[0]);
+            sF.outputs.hdgDeltaTime.push(cell[1]);
+            sF.outputs.hdgRain.push(cell[2]);
+            sF.outputs.hdgTotalWaterLevel.push(cell[3]);
+            sF.outputs.hdgSurfaceFlow.push(cell[4]);
+            sF.outputs.hdgSurfaceVolRunoff.push(cell[5]);
+          }
+
+          row = sF.outputs.profileCsvData.split('\n');
+          for (var i = 0; i < row.length; i++) {
+            cell = row[i].split(',');
+            sF.outputs.prfLength.push(cell[0]);
+            sF.outputs.prfSoilveg.push(cell[1]);
+            sF.outputs.prfMaximalSrfFlow.push(cell[2]);
+            sF.outputs.prfTotalRunoff.push(cell[3]);
+            sF.outputs.prfMaxSrfRunoffVelocity.push(cell[4]);
+            sF.outputs.prfMaxTangentialStress.push(cell[5]);
+            sF.outputs.prfRillRunoff.push(cell[6]);
+          }
+
+          return true;
+        }
+        return false;
+      },
+
+      createForms: function() {
+        if ((sF.outputs.accepted) && (typeof Chart != 'undefined') && (sF.charts.generateData())) {
+
+          var ctx = document.getElementById('jsf-surfaceVolRunoff');
+
+          sF.charts.hdrChartOne = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: sF.outputs.hdgTime,
+              datasets: [{
+                label: 'surfaceVolRunoff[m3]',
+                backgroundColor: 'rgba(255,0,0,0)',
+                pointRadius: 0,
+                borderColor: 'rgba(0,0,255,0.8)',
+                borderWidth: 3,
+                data: sF.outputs.hdgSurfaceVolRunoff
+              }]
+            },
+            options: {
+              title: {
+                display: true,
+                text: 'Hydrogram chart 1'
+              },
+              scales: {
+                yAxes: [{
+                  ticks: {
+                      beginAtZero: true
+                  }
+                }]
+              }
+            }
+          });
+
+          var ctx2 = document.getElementById('jsf-surfaceChartTwo');
+
+          sF.charts.hdrChartTwo = new Chart(ctx2, {
+            type: 'line',
+            data: {
+              labels: sF.outputs.hdgTime,
+              datasets: [{
+                label: 'surfaceFlow[m3/s]',
+                backgroundColor: 'rgba(255,0,0,0)',
+                pointRadius: 0,
+                borderColor: 'rgba(255,0,0,0.8)',
+                borderWidth: 3,
+                data: sF.outputs.hdgSurfaceFlow
+              }, {
+                label: 'rainfall[m]',
+                backgroundColor: 'rgba(255,0,0,0)',
+                pointRadius: 0,
+                borderColor: 'rgba(0,255,0,0.8)',
+                borderWidth: 3,
+                data: sF.outputs.hdgRain
+              }]
+            },
+            options: {
+              title: {
+                display: true,
+                text: 'Hydrogram chart 2'
+              },
+            }
+          });
+
+          var ctx3 = document.getElementById('jsf-profileChartOne');
+
+          sF.charts.prfChartOne = new Chart(ctx3, {
+            type: 'line',
+            data: {
+              labels: sF.outputs.prfLength,
+              datasets: [{
+                label: 'MaximalSurfaceFlow [m3/s]',
+                backgroundColor: 'rgba(255,0,0,0)',
+                pointRadius: 0,
+                borderColor: 'rgba(255,0,0,0.8)',
+                borderWidth: 3,
+                data: sF.outputs.prfMaximalSrfFlow
+              }]
+            },
+            options: {
+              title: {
+                display: true,
+                text: 'MaximalSurfaceFlow [m3/s]'
+              },
+            }
+          });
+
+        }
+      },
+
+      removeAllData: function(chart) {
+        chart.data.labels = [];
+        chart.data.datasets.forEach((dataset) => {
+          dataset.data = [];
+        });
+        chart.update();
+      },
+
+      updateForms: function() {
+        if ((sF.outputs.accepted) && (typeof Chart != 'undefined') && (sF.charts.generateData())) {
+
+          sF.charts.removeAllData(sF.charts.hdrChartOne);
+          sF.charts.removeAllData(sF.charts.hdrChartTwo);
+          sF.charts.removeAllData(sF.charts.prfChartOne);
+
+          sF.charts.hdrChartOne.data.labels = sF.outputs.hdgTime;
+          sF.charts.hdrChartOne.data.datasets[0].data = sF.outputs.hdgSurfaceVolRunoff;
+          sF.charts.hdrChartOne.update();
+
+          sF.charts.hdrChartTwo.data.labels = sF.outputs.hdgTime;
+          sF.charts.hdrChartTwo.data.datasets[0].data = sF.outputs.hdgSurfaceFlow;
+          sF.charts.hdrChartTwo.data.datasets[1].data = sF.outputs.hdgRain;
+          sF.charts.hdrChartTwo.update();
+
+          sF.charts.prfChartOne.data.labels = sF.outputs.prfLength;
+          sF.charts.prfChartOne.data.datasets[0].data = sF.outputs.prfMaximalSrfFlow;
+          sF.charts.prfChartOne.update();
+        }
+      },
+
+      init: function() {
+
+      }
+    },
+
     postman: {
       initialized: false,
       button: null,
 
+      getInputs: function() {
+        var str = '',
+            retString = '',
+            actualProjectionInput = null,
+            actualHeightInput = null,
+            actualMeasuresInput = null,
+            actualSurfacesInput = null,
+            actualProjectionValue = null,
+            actualHeightValue = null,
+            actualRatioNumber = 0,
+            actualMeasuresValue = null,
+            actualSurfacesValue = null;
+
+        for (var i = 1; i < sF.section.counter; i++) {
+          actualProjectionInput = document.getElementsByName('projection-' + i)[0];
+          actualHeightInput = document.getElementsByName('height-' + i)[0];
+          actualMeasuresInput = document.getElementsByName('measures-' + i)[0];
+          actualSurfacesInput = document.getElementsByName('surfaces-' + i)[0];
+
+          actualProjectionValue = parseFloat(actualProjectionInput.value);
+          actualHeightValue = parseFloat(actualHeightInput.value);
+          actualMeasuresValue = actualMeasuresInput.value;
+          actualSurfacesValue = actualSurfacesInput.value;
+
+          actualRatioNumber = actualHeightValue / actualProjectionValue;
+
+          if (!isNaN(actualRatioNumber)) {
+            actualRatioNumber = actualRatioNumber.toFixed(11);
+            str = actualProjectionValue + ';' + actualHeightValue + ';' + actualMeasuresValue + ';' + actualSurfacesValue + ';' + actualRatioNumber + '\n';
+            retString += str;
+          }
+        }
+
+        return retString;
+      },
+
+      getSoilTypes: function() {
+        var str = '',
+            retString = '';
+
+        for (var i=0; i < sF.meSu.counters['surfaces']; i++) {
+          for (var j=0; j < sF.meSu.counters['measures']; j++) {
+            str = sF.globalData['surfaces'][i]['code'] + sF.globalData['measures'][j]['code'] + ';' +
+                  sF.globalData['surfaces'][i]['k'].toFixed(11) + ';' +
+                  sF.globalData['surfaces'][i]['s'].toFixed(11) + ';' +
+                  sF.globalData['measures'][j]['n'].toFixed(11) + ';' +
+                  sF.globalData['measures'][j]['pi'].toFixed(11) + ';' +
+                  sF.globalData['measures'][j]['ppl'].toFixed(11) + ';' +
+                  sF.globalData['measures'][j]['ret'].toFixed(11) + ';' +
+                  sF.globalData['surfaces'][i]['b'].toFixed(11) + ';' +
+                  sF.globalData['surfaces'][i]['x'].toFixed(11) + ';' +
+                  sF.globalData['surfaces'][i]['y'].toFixed(11) + ';' +
+                  sF.globalData['measures'][j]['tau'].toFixed(11) + ';' +
+                  sF.globalData['measures'][j]['v'].toFixed(11) + '\n';
+
+            retString += str;
+          }
+        }
+
+        return retString;
+      },
+
       createRequestXMLString: function() {
+        var input = sF.postman.getInputs();
+        var soilTypes = sF.postman.getSoilTypes();
         var text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
           '\t<wps:Execute service="WPS" version="1.0.0" xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">\n' +
             '\t\t<ows:Identifier>smoderp1d</ows:Identifier>\n' +
@@ -907,22 +1175,27 @@
               '\t\t\t<wps:Input>\n' +
                 '\t\t\t\t<ows:Identifier>input</ows:Identifier>\n' +
                 '\t\t\t\t<wps:Data>\n' +
-                  '\t\t\t\t\t<wps:ComplexData mimeType="text/csv">\n' +
-                  '\t\t\t\t\t</wps:ComplexData>\n' +
+                  '\t\t\t\t\t<wps:ComplexData mimeType="text/csv"><![CDATA[vodorovny prumet stahu[m];prevyseni[m];povrch;puda;sklon\n' +
+                  input + ']]></wps:ComplexData>\n' +
                 '\t\t\t\t</wps:Data>\n' +
               '\t\t\t</wps:Input>\n' +
               '\t\t\t<wps:Input>\n' +
                 '\t\t\t\t<ows:Identifier>soil_types</ows:Identifier>\n' +
                 '\t\t\t\t<wps:Data>\n' +
-                  '\t\t\t\t\t<wps:ComplexData mimeType="text/csv">\n' +
-                  '\t\t\t\t\t</wps:ComplexData>\n' +
+                  '\t\t\t\t\t<wps:ComplexData mimeType="text/csv"><![CDATA[soilveg;k;s;n;pi;ppl;ret;b;x;y;tau;v\n' +
+                  soilTypes + ']]></wps:ComplexData>\n' +
                 '\t\t\t\t</wps:Data>\n' +
               '\t\t\t</wps:Input>\n' +
             '\t\t</wps:DataInputs>\n' +
             '\t\t<wps:ResponseForm>\n' +
               '\t\t\t<wps:ResponseDocument lineage="false" storeExecuteResponse="false" status="false">\n' +
                 '\t\t\t\t<wps:Output asreference="true" mimeType="text/csv">\n' +
-                  '\t\t\t\t\t<ows:Identifier>output</ows:Identifier>\n' +
+                  '\t\t\t\t\t<ows:Identifier>profile</ows:Identifier>\n' +
+                '\t\t\t\t</wps:Output>\n' +
+              '\t\t\t</wps:ResponseDocument>\n' +
+              '\t\t\t<wps:ResponseDocument lineage="false" storeExecuteResponse="false" status="false">\n' +
+                '\t\t\t\t<wps:Output asreference="true" mimeType="text/csv">\n' +
+                  '\t\t\t\t\t<ows:Identifier>hydrogram</ows:Identifier>\n' +
                 '\t\t\t\t</wps:Output>\n' +
               '\t\t\t</wps:ResponseDocument>\n' +
             '\t\t</wps:ResponseForm>' +
@@ -932,31 +1205,58 @@
       },
 
       processResponse: function(xmlFile) {
-        var complexData = xmlFile.getElementsByTagName('wps\:ComplexData')[0],
-            textContent = complexData.textContent;
-            //array = textContent.split(';');
+        console.log('Processing response!');
 
-        if (textContent.indexOf('\n') == 0) {
-          textContent = textContent.substring(1);
+        var identifier = null,
+            idValue = null,
+            data = null,
+            complexData = null,
+            outputs = xmlFile.getElementsByTagName('wps:Output');
+
+        for (var i=0; i<outputs.length; i++) {
+          identifier = outputs[i].getElementsByTagName('ows:Identifier')[0];
+          if (identifier) {
+            complexData = outputs[i].getElementsByTagName('wps\:ComplexData')[0];
+            if (complexData) {
+              idValue = identifier.childNodes[0].textContent;
+              data = complexData.childNodes[0].textContent;
+
+              switch (idValue) {
+                case 'profile':
+                  sF.outputs.profileCsvData = data;
+                  break;
+                case 'hydrogram':
+                  sF.outputs.hydrogramCsvData = data;
+                  break;
+              }
+            }
+          }
         }
 
-        textContent = textContent.replace('\n','&');
-
-        console.log(textContent);
+        if ((sF.outputs.profileCsvData) && (sF.outputs.hydrogramCsvData)) {
+          if (sF.outputs.accepted === false) {
+            sF.outputs.accepted = true;
+            sF.charts.createForms();
+          } else {
+            sF.charts.updateForms();
+          }
+        }
       },
 
       send: function() {
         var requestXmlString = sF.postman.createRequestXMLString();
 
-        var xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function() {
-          if ((xhttp.readyState == 4) && (xhttp.status == 200)) {
-            sF.postman.processResponse(xhttp.responseXML);
-          }
-        };
-        xhttp.open('POST',sF.endpointUrl, true);
-        xhttp.setRequestHeader('Content-Type', 'text/xml');
-        xhttp.send(requestXmlString);
+        if (true) { // TODO delete
+          var xhttp = new XMLHttpRequest();
+          xhttp.onreadystatechange = function() {
+            if ((xhttp.readyState == 4) && (xhttp.status == 200)) {
+              sF.postman.processResponse(xhttp.responseXML);
+            }
+          };
+          xhttp.open('POST',sF.endpointUrl, true);
+          xhttp.setRequestHeader('Content-Type', 'text/xml');
+          xhttp.send(requestXmlString);
+        }
       },
 
       init: function() {
@@ -985,6 +1285,7 @@
       sF.meSu.init('surfaces');
       sF.rainfall.init();
       sF.postman.init();
+      sF.charts.init();
 
       window.onkeydown = function(e) {
         if (e.keyCode == 27) {
