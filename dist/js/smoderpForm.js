@@ -1,7 +1,7 @@
 (function () {
   var sF = {
     places: 2, // počet desetinných míst používaných čísel
-    endpointUrl: 'http://rain1.fsv.cvut.cz:8080/services/wps/', //'http://geo102.fsv.cvut.cz:80/services/yfsgwps', //'http://geo102.fsv.cvut.cz/services/yfsgwps', //'response.xml', //'https://rain1.fsv.cvut.cz/services/wps',
+    endpointUrl: 'https://rain1.fsv.cvut.cz:4444/services/wps/',
     userRainFalls: [],
     fifteenRainFallValue: null,
     globalColumnTexts: {
