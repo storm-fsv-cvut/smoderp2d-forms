@@ -922,7 +922,12 @@
             '\t\t<wps:ResponseForm>\n' +
               '\t\t\t<wps:ResponseDocument lineage="false" storeExecuteResponse="false" status="false">\n' +
                 '\t\t\t\t<wps:Output asreference="true" mimeType="text/csv">\n' +
-                  '\t\t\t\t\t<ows:Identifier>output</ows:Identifier>\n' +
+                  '\t\t\t\t\t<ows:Identifier>profile</ows:Identifier>\n' +
+                '\t\t\t\t</wps:Output>\n' +
+              '\t\t\t</wps:ResponseDocument>\n' +
+              '\t\t\t<wps:ResponseDocument lineage="false" storeExecuteResponse="false" status="false">\n' +
+                '\t\t\t\t<wps:Output asreference="true" mimeType="text/csv">\n' +
+                  '\t\t\t\t\t<ows:Identifier>hydrogram</ows:Identifier>\n' +
                 '\t\t\t\t</wps:Output>\n' +
               '\t\t\t</wps:ResponseDocument>\n' +
             '\t\t</wps:ResponseForm>' +
