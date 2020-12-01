@@ -1186,6 +1186,20 @@
                   soilTypes + ']]></wps:ComplexData>\n' +
                 '\t\t\t\t</wps:Data>\n' +
               '\t\t\t</wps:Input>\n' +
+              '\t\t\t<wps:Input>\n' +
+                '\t\t\t\t<ows:Identifier>rainfall</ows:Identifier>\n' +
+                '\t\t\t\t<wps:Data>\n' +
+                  '\t\t\t\t\t<wps:ComplexData mimeType="text/plain"><![CDATA[30 60]]></wps:ComplexData>\n' +
+                '\t\t\t\t</wps:Data>\n' +
+              '\t\t\t</wps:Input>\n' +
+              '\t\t\t<wps:Input>\n' +
+                '\t\t\t\t<ows:Identifier>config</ows:Identifier>\n' +
+                '\t\t\t\t<wps:Data>\n' +
+                  '\t\t\t\t\t<wps:ComplexData mimeType="text/plain"><![CDATA[[domain]\n'+
+                  '# spatial resolution in meters\n' +
+	          'res: 1]]></wps:ComplexData>\n' +
+                '\t\t\t\t</wps:Data>\n' +
+              '\t\t\t</wps:Input>\n' +
             '\t\t</wps:DataInputs>\n' +
             '\t\t<wps:ResponseForm>\n' +
               '\t\t\t<wps:ResponseDocument lineage="false" storeExecuteResponse="false" status="false">\n' +
