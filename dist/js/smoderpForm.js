@@ -1102,6 +1102,8 @@
     postman: {
       initialized: false,
       button: null,
+      statusLocation: null,
+      timeout: null,
 
       getInputs: function() {
         var str = '',
@@ -1216,7 +1218,7 @@
         return text;
       },
 
-      processResponse: function(xmlFile) {
+      processFinalResponse: function(xmlFile) {
         console.log('Processing response!');
 
         var identifier = null,
@@ -1255,19 +1257,61 @@
         }
       },
 
-      send: function() {
-        var requestXmlString = sF.postman.createRequestXMLString();
+      processResponse: function(xmlFile) {
+        var status = xmlFile.getElementsByTagName('wps:Status')[0],
+            processSucceeded = status.getElementsByTagName('wps:ProcessSucceeded'),
+            processAccepted = status.getElementsByTagName('wps:ProcessAccepted'),
+            processStarted = status.getElementsByTagName('wps:ProcessStarted');
 
-        if (true) { // TODO delete
-          var xhttp = new XMLHttpRequest();
-          xhttp.onreadystatechange = function() {
-            if ((xhttp.readyState == 4) && (xhttp.status == 200)) {
-              sF.postman.processResponse(xhttp.responseXML);
+
+        if (processSucceeded.length > 0) {
+          console.log('processSucceeded');
+          sF.postman.processFinalResponse(xmlFile);
+        } else {
+          if (processAccepted.length > 0) {
+            console.log('processAccepted');
+
+            var executeResponse = xmlFile.getElementsByTagName('wps:ExecuteResponse')[0];
+            if (executeResponse.hasAttribute('statusLocation')) {
+              sF.postman.statusLocation = executeResponse.getAttribute('statusLocation');
+
+              console.log('Next endpoint is: ' + sF.postman.statusLocation);
+
+              sF.postman.timeout = setTimeout(function () {
+                sF.postman.send(false);
+              }, 1000);
             }
-          };
-          xhttp.open('POST',sF.endpointUrl, true);
-          xhttp.setRequestHeader('Content-Type', 'text/xml');
+          } else if (processStarted.length > 0) {
+            console.log('processStarted');
+          }
+        }
+
+      },
+
+      send: function(first) {
+        var url = null,
+            requestXmlString = null;
+
+        if (first) {
+          url = sF.endpointUrl;
+          requestXmlString = sF.postman.createRequestXMLString();
+        } else {
+          url = sF.postman.statusLocation;
+        }
+
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+          if ((xhttp.readyState == 4) && (xhttp.status == 200)) {
+            sF.postman.processResponse(xhttp.responseXML);
+          }
+        };
+        xhttp.open('POST', url, true);
+        xhttp.setRequestHeader('Content-Type', 'text/xml');
+
+        if (first) {
           xhttp.send(requestXmlString);
+        } else {
+          xhttp.send();
         }
       },
 
@@ -1277,7 +1321,7 @@
           if (sF.postman.button) {
 
             sF.postman.button.addEventListener('click', function() {
-              sF.postman.send();
+              sF.postman.send(true);
             });
 
             sF.postman.initialized = true;
