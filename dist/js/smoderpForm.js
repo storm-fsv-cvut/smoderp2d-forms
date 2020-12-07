@@ -1099,8 +1099,99 @@
       }
     },
 
+    loader: {
+      initialized: false,
+      mainBox: null,
+
+      quickHide: function(destination) {
+        var loaders = destination.getElementsByClassName('jsf-loader');
+        for (var i = 0; i < loaders.length; i++) {
+          loaders[i].remove();
+        }
+      },
+
+      hide: function(destination) {
+        setTimeout(function() {
+          var loaders = destination.getElementsByClassName('jsf-loader');
+          for (var i = 0; i < loaders.length; i++) {
+            loaders[i].remove();
+          }
+        }, 1000);
+      },
+
+      updatePercents: function(destination, percent) {
+        var showingPercent = 0;
+
+        var loaders = destination.getElementsByClassName('jsf-loader');
+        for (var i = 0; i < loaders.length; i++) {
+          var percentDivs = loaders[i].getElementsByClassName('jsf-loader-percent');
+          for (var j = 0; j < percentDivs.length; j++) {
+            if ((percent > 80) && (percent < 90)) {
+              showingPercent = percent + 10;
+            } else if (percent > 90) {
+              showingPercent = 100;
+            } else {
+              showingPercent = percent;
+            }
+            percentDivs[j].style.width = showingPercent + '%';
+          }
+          var numberDivs = loaders[i].getElementsByClassName('jsf-loader-number');
+          for (var k = 0; k < numberDivs.length; k++) {
+            numberDivs[k].innerHTML = percent + '%';
+          }
+        }
+      },
+
+      show: function(destination) {
+        var loader = document.createElement('div'),
+            loaderSymbol = document.createElement('div'),
+            div = null;
+
+        loader.className = 'sf-loader jsf-loader';
+        loaderSymbol.className = 'sf-loader__symbol';
+
+        for (var i=0; i<2; i++) {
+          div = document.createElement('div');
+          loaderSymbol.appendChild(div);
+        }
+
+        loader.appendChild(loaderSymbol);
+
+        var scaleDiv = document.createElement('div');
+        scaleDiv.className = 'sf-loader__scale';
+
+        var percentDiv = document.createElement('div');
+        percentDiv.className = 'sf-loader__percent jsf-loader-percent';
+
+        scaleDiv.appendChild(percentDiv);
+        loader.appendChild(scaleDiv);
+
+        var numberDiv = document.createElement('div');
+        numberDiv.className = 'sf-loader__number jsf-loader-number';
+
+        loader.appendChild(numberDiv);
+
+        setTimeout(function() {
+          if (loader.tagName) {
+            sF.addClass(loader,'jsf-open');
+          }
+        }, 1000);
+
+        destination.appendChild(loader);
+      },
+
+      init: function() {
+        var mainEl = document.getElementById('jsf-mainbox');
+        if (mainEl.tagName) {
+          sF.loader.mainBox = mainEl;
+          sF.loader.initialized = true;
+        }
+      }
+    },
+
     postman: {
       initialized: false,
+      finalXML: null,
       button: null,
       statusLocation: null,
       timeout: null,
@@ -1218,14 +1309,14 @@
         return text;
       },
 
-      processFinalResponse: function(xmlFile) {
-        console.log('Processing response!');
+      processFinalResponse: function() {
+        console.log('Processing final response!');
 
         var identifier = null,
             idValue = null,
             data = null,
             complexData = null,
-            outputs = xmlFile.getElementsByTagName('wps:Output');
+            outputs = sF.postman.finalXML.getElementsByTagName('wps:Output');
 
         for (var i=0; i<outputs.length; i++) {
           identifier = outputs[i].getElementsByTagName('ows:Identifier')[0];
@@ -1265,34 +1356,56 @@
 
 
         if (processSucceeded.length > 0) {
-          console.log('processSucceeded');
-          sF.postman.processFinalResponse(xmlFile);
+
+          ((sF.loader.initialized) ? sF.loader.updatePercents(sF.loader.mainBox,100) : null);
+          sF.postman.finalXML = xmlFile;
+
+          setTimeout(function() {
+            ((sF.loader.initialized) ? sF.loader.quickHide(sF.loader.mainBox) : null);
+          },1000);
+
+          setTimeout(function() {
+            sF.postman.processFinalResponse();
+          },1500);
+
         } else {
           if (processAccepted.length > 0) {
-            console.log('processAccepted');
+            //console.log('processAccepted');
+
+            ((sF.loader.initialized) ? sF.loader.show(sF.loader.mainBox) : null);
 
             var executeResponse = xmlFile.getElementsByTagName('wps:ExecuteResponse')[0];
             if (executeResponse.hasAttribute('statusLocation')) {
               sF.postman.statusLocation = executeResponse.getAttribute('statusLocation');
 
-              console.log('Next endpoint is: ' + sF.postman.statusLocation);
-
               sF.postman.timeout = setTimeout(function () {
                 sF.postman.send(false);
-              }, 1000);
+              }, 2000);
             }
           } else if (processStarted.length > 0) {
-            console.log('processStarted');
+            //console.log('processStarted');
+
+            if (processStarted[0].hasAttribute('percentCompleted')) {
+              var percentCompleted = processStarted[0].getAttribute('percentCompleted');
+
+              ((sF.loader.initialized) ? sF.loader.updatePercents(sF.loader.mainBox,percentCompleted) : null);
+
+              //console.log('Percent: ' + percentCompleted);
+            }
+
+            sF.postman.timeout = setTimeout(function () {
+              sF.postman.send(false);
+            }, 1000);
           }
         }
 
       },
 
-      send: function(first) {
+      send: function(firstSending) {
         var url = null,
             requestXmlString = null;
 
-        if (first) {
+        if (firstSending) {
           url = sF.endpointUrl;
           requestXmlString = sF.postman.createRequestXMLString();
         } else {
@@ -1305,7 +1418,7 @@
             sF.postman.processResponse(xhttp.responseXML);
           }
         };
-        if (first) {
+        if (firstSending) {
           xhttp.open('POST', url, true);
           xhttp.setRequestHeader('Content-Type', 'text/xml');
           xhttp.send(requestXmlString);
@@ -1340,6 +1453,7 @@
       sF.meSu.init('measures');
       sF.meSu.init('surfaces');
       sF.rainfall.init();
+      sF.loader.init();
       sF.postman.init();
       sF.charts.init();
 

@@ -14,39 +14,41 @@
 
   <body>
 
-    <h2>Srážka</h2>
+    <div id="jsf-mainbox">
+      <h2>Srážka</h2>
 
-    <table class="sf-table">
-      <tr class="sf-table-row is--not-highlighted"><td>
-        <select id="jsf-rainfall-select" name="rainfall-type">
-          <option value="none" selected="true" disabled="true">Vyberte možnost</option>
-          <option value="user">Uživatelská srážka</option>
-          <option value="fifteen">Maximální 15ti minutový déšt</option>
-          <option value="position" disabled="1">Výběr srážky podle polohy</option>
-        </select>
-      </td><td>
-        <div id="jsf-rainfall-setup" class="sf-button jsf-disabled">Nastavit</div>
-      </td></tr>
-    </table>
+      <table class="sf-table">
+        <tr class="sf-table-row is--not-highlighted"><td>
+          <select id="jsf-rainfall-select" name="rainfall-type">
+            <option value="none" selected="true" disabled="true">Vyberte možnost</option>
+            <option value="user">Uživatelská srážka</option>
+            <option value="fifteen">Maximální 15ti minutový déšt</option>
+            <option value="position" disabled="1">Výběr srážky podle polohy</option>
+          </select>
+        </td><td>
+          <div id="jsf-rainfall-setup" class="sf-button jsf-disabled">Nastavit</div>
+        </td></tr>
+      </table>
 
-    <h2>Svah</h2>
+      <h2>Svah</h2>
 
-    <table id="jsf-main-table" class="sf-table">
-      <tr>
-        <th>Číslo úseku</th>
-        <th>Průmět [m]</th>
-        <th>Výška [m]</th>
-        <th>Poměr</th>
-        <th>Ochranné opratření</th>
-        <th>Půda</th>
-        <th></th>
-      </tr>
-    </table>
+      <table id="jsf-main-table" class="sf-table">
+        <tr>
+          <th>Číslo úseku</th>
+          <th>Průmět [m]</th>
+          <th>Výška [m]</th>
+          <th>Poměr</th>
+          <th>Ochranné opratření</th>
+          <th>Půda</th>
+          <th></th>
+        </tr>
+      </table>
 
-    <div id="jsf-section-add" class="sf-button">Přidat řádek</div>
+      <div id="jsf-section-add" class="sf-button">Přidat řádek</div>
 
-    <div id="jsf-postman" class="sf-button">Spočítej</div>
+      <div id="jsf-postman" class="sf-button">Spočítej</div>
 
+    </div>
 
     <div id="jsf-modal" class="sf-modal">
       <div class="sf-modal__content">

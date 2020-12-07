@@ -1,0 +1,76 @@
+.sf-loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+
+  z-index: z('loading');
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  opacity: 0;
+  transition: opacity 200ms ease;
+
+  &.jsf-open {
+    opacity: 1;
+  }
+}
+
+.sf-loader__symbol {
+  position: relative;
+  width: 80px;
+  height: 80px;
+
+  div {
+    position: absolute;
+    border: 4px solid #fff;
+    opacity: 1;
+    border-radius: 50%;
+    animation: loader 5s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+
+    &:nth-child(2) {
+      animation-delay: -2.5s;
+    }
+  }
+}
+
+@keyframes loader {
+  0% {
+    top: 36px;
+    left: 36px;
+    width: 0;
+    height: 0;
+    opacity: 1;
+  }
+  100% {
+    top: 0px;
+    left: 0px;
+    width: 72px;
+    height: 72px;
+    opacity: 0;
+  }
+}
+
+.sf-loader__scale {
+  width: 100px;
+  height: 10px;
+  margin: 1rem 0;
+  background-color: rgba(255,255,255,0.4);
+
+  .sf-loader__percent {
+    width: 0;
+    height: 100%;
+    background-color: rgba(255,255,255,0.8);
+    transition: width 1000ms linear;
+  }
+}
+
+.sf-loader__number {
+  margin: 1rem 0;
+  font-size: .9rem;
+  color: rgba(255,255,255,0.8);
+}
