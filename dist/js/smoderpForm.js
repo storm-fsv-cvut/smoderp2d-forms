@@ -110,7 +110,6 @@
           sF.addClass(rows[order],'jsf-valid');
           break;
       }
-
     },
 
     modal: {
@@ -384,12 +383,52 @@
 
       lastSelectToFirstOption: function() {
         if ((sF.section.lastSelect.nodeName === 'select') || (sF.section.lastSelect.nodeName === 'SELECT')) {
-          var options = sF.section.lastSelect.getElementsByTagName('OPTION');
+          var options = sF.section.lastSelect.getElementsByTagName('OPTION'),
+              order = null;
+
+          ((sF.section.lastSelect.hasAttribute('data-order')) ? order = sF.section.lastSelect.getAttribute('data-order') : order = 0);
           sF.section.lastSelect.value = options[0].value;
+          sF.section.isValid(order);
         }
         // TODO not good solution
         if (sF.section.lastSelect == sF.rainfall.mainSelect) {
           sF.rainfall.setSetupButton(false);
+        }
+      },
+
+      isValid: function(order) {
+        var table = sF.section.mainTable,
+            rows = table.getElementsByTagName('TR'),
+            dataType = null,
+            error = false;
+
+        if (rows[order]) {
+          var inputs = rows[order].getElementsByTagName('input'),
+              selects = rows[order].getElementsByTagName('select');
+
+          for (var i = 0; i < inputs.length; i++) {
+            ((inputs[i].hasAttribute('data-type')) ? dataType = inputs[i].getAttribute('data-type') : dataType = null);
+
+            if ((dataType == 'projection') || (dataType == 'height')) {
+              (((isNaN(inputs[i].value)) || (inputs[i].value == 0) || (inputs[i].value < 0)) ? error = true : null);
+            } else if (dataType == 'ratio') {
+              (((inputs[i].value == 0) || (inputs[i].value == '')) ? error = true : null);
+            }
+          }
+
+          for (var i = 0; i < selects.length; i++) {
+            ((selects[i].hasAttribute('data-type')) ? dataType = selects[i].getAttribute('data-type') : dataType = null);
+
+            if ((dataType == 'measures') || (dataType == 'surfaces')) {
+              (((selects[i].value == 'needSelect') || (selects[i].value == 'addNew')) ? error = true : null);
+            }
+          }
+        }
+
+        if (error) {
+          sF.markRow(sF.section.mainTable,order,'invalid');
+        } else {
+          sF.markRow(sF.section.mainTable,order,'valid');
         }
       },
 
@@ -409,22 +448,26 @@
               if (heightValue > 0) {
                 var newValue = projectionValue / heightValue;
                 ratioInput.value = '1:' + sF.round(newValue,sF.places);
-                sF.markRow(sF.section.mainTable,order,'valid');
+                //sF.markRow(sF.section.mainTable,order,'valid');
+                sF.section.isValid(order);
               } else if (sF.section.isRatioValueCorrect(ratioValue)) {
                 var newValue = projectionValue / sF.section.getRatioValue(ratioValue);
                 heightInput.value = sF.round(newValue,2);
-                sF.markRow(sF.section.mainTable,order,'valid');
+                //sF.markRow(sF.section.mainTable,order,'valid');
+                sF.section.isValid(order);
               }
               break;
             case 'height':
               if (projectionValue > 0) {
                 var newValue = projectionValue / heightValue;
                 ratioInput.value = '1:' + sF.round(newValue,sF.places);
-                sF.markRow(sF.section.mainTable,order,'valid');
+                //sF.markRow(sF.section.mainTable,order,'valid');
+                sF.section.isValid(order);
               } else if (sF.section.isRatioValueCorrect(ratioValue)) {
                 var newValue = heightValue * sF.section.getRatioValue(ratioValue);
                 projectionInput.value = sF.round(newValue,2);
-                sF.markRow(sF.section.mainTable,order,'valid');
+                //sF.markRow(sF.section.mainTable,order,'valid');
+                sF.section.isValid(order);
               }
               break;
             case 'ratio':
@@ -436,15 +479,18 @@
                 } else if (heightValue > 0) {
                   var newValue = heightValue * sF.section.getRatioValue(ratioValue);
                   projectionInput.value = newValue;
-                  sF.markRow(sF.section.mainTable,order,'valid');
+                  //sF.markRow(sF.section.mainTable,order,'valid');
+                  sF.section.isValid(order);
                 }
               } else {
-                sF.markRow(sF.section.mainTable,order,'invalid');
+                //sF.markRow(sF.section.mainTable,order,'invalid');
+                sF.section.isValid(order);
               }
               break;
           }
         } else {
-          sF.markRow(sF.section.mainTable,order,'invalid');
+          //sF.markRow(sF.section.mainTable,order,'invalid');
+          sF.section.isValid(order);
         }
       },
 
@@ -458,6 +504,7 @@
           input.setAttribute('type', 'number');
           input.setAttribute('min', '0');
           input.setAttribute('value', '0');
+          eventName = 'input';
         } else if (name === 'ratio') {
           input.setAttribute('type', 'text');
           input.setAttribute('value', '0');
@@ -472,7 +519,6 @@
         input.addEventListener(eventName, function(e) {
           var input = e.target,
               inputType = input.getAttribute('data-type');
-
           sF.section.calculate(input);
         });
 
@@ -527,6 +573,13 @@
 
         select.setAttribute('name', selectName);
         select.setAttribute('data-type', code);
+        select.setAttribute('data-order', sF.section.counter);
+
+        option = document.createElement('OPTION');
+        option.setAttribute('value', 'needSelect');
+        option.text = 'Vyberte';
+        select.appendChild(option);
+
 
         while (sF.globalData[code][i]) {
           option = document.createElement('OPTION');
@@ -550,6 +603,9 @@
             } else {
               console.log('Error: can\'t open modal window.');
             }
+          } else {
+            var order = select.getAttribute('data-order');
+            sF.section.isValid(order);
           }
         });
 
@@ -1196,7 +1252,7 @@
       statusLocation: null,
       timeout: null,
 
-      getInputs: function() {
+      getSelectionsData: function() {
         var str = '',
             retString = '',
             actualProjectionInput = null,
@@ -1259,7 +1315,7 @@
       },
 
       createRequestXMLString: function() {
-        var input = sF.postman.getInputs();
+        var selectionsData = sF.postman.getSelectionsData();
         var soilTypes = sF.postman.getSoilTypes();
         var text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
           '\t<wps:Execute service="WPS" version="1.0.0" xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">\n' +
@@ -1269,7 +1325,7 @@
                 '\t\t\t\t<ows:Identifier>input</ows:Identifier>\n' +
                 '\t\t\t\t<wps:Data>\n' +
                   '\t\t\t\t\t<wps:ComplexData mimeType="text/csv"><![CDATA[vodorovny prumet stahu[m];prevyseni[m];povrch;puda;sklon\n' +
-                  input + ']]></wps:ComplexData>\n' +
+                  selectionsData + ']]></wps:ComplexData>\n' +
                 '\t\t\t\t</wps:Data>\n' +
               '\t\t\t</wps:Input>\n' +
               '\t\t\t<wps:Input>\n' +
