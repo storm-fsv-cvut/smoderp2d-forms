@@ -1305,12 +1305,12 @@
             sF.postman.processResponse(xhttp.responseXML);
           }
         };
-        xhttp.open('POST', url, true);
-        xhttp.setRequestHeader('Content-Type', 'text/xml');
-
         if (first) {
+          xhttp.open('POST', url, true);
+          xhttp.setRequestHeader('Content-Type', 'text/xml');
           xhttp.send(requestXmlString);
         } else {
+          xhttp.open('GET', url, true);
           xhttp.send();
         }
       },
