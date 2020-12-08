@@ -1405,56 +1405,66 @@
       },
 
       processResponse: function(xmlFile) {
-        var status = xmlFile.getElementsByTagName('wps:Status')[0],
-            processSucceeded = status.getElementsByTagName('wps:ProcessSucceeded'),
-            processAccepted = status.getElementsByTagName('wps:ProcessAccepted'),
-            processStarted = status.getElementsByTagName('wps:ProcessStarted');
+
+        if (xmlFile) {
+          var status = xmlFile.getElementsByTagName('wps:Status')[0],
+              processSucceeded = status.getElementsByTagName('wps:ProcessSucceeded'),
+              processAccepted = status.getElementsByTagName('wps:ProcessAccepted'),
+              processStarted = status.getElementsByTagName('wps:ProcessStarted');
 
 
-        if (processSucceeded.length > 0) {
+          if (processSucceeded.length > 0) {
 
-          ((sF.loader.initialized) ? sF.loader.updatePercents(sF.loader.mainBox,100) : null);
-          sF.postman.finalXML = xmlFile;
+            ((sF.loader.initialized) ? sF.loader.updatePercents(sF.loader.mainBox,100) : null);
+            sF.postman.finalXML = xmlFile;
 
-          setTimeout(function() {
-            ((sF.loader.initialized) ? sF.loader.quickHide(sF.loader.mainBox) : null);
-          },1000);
+            setTimeout(function() {
+              ((sF.loader.initialized) ? sF.loader.quickHide(sF.loader.mainBox) : null);
+            },1000);
 
-          setTimeout(function() {
-            sF.postman.processFinalResponse();
-          },1500);
+            setTimeout(function() {
+              sF.postman.processFinalResponse();
+            },1500);
 
-        } else {
-          if (processAccepted.length > 0) {
-            //console.log('processAccepted');
+          } else {
+            if (processAccepted.length > 0) {
+              //console.log('processAccepted');
 
-            ((sF.loader.initialized) ? sF.loader.show(sF.loader.mainBox) : null);
+              ((sF.loader.initialized) ? sF.loader.show(sF.loader.mainBox) : null);
 
-            var executeResponse = xmlFile.getElementsByTagName('wps:ExecuteResponse')[0];
-            if (executeResponse.hasAttribute('statusLocation')) {
-              sF.postman.statusLocation = executeResponse.getAttribute('statusLocation');
+              var executeResponse = xmlFile.getElementsByTagName('wps:ExecuteResponse')[0];
+              if (executeResponse.hasAttribute('statusLocation')) {
+                sF.postman.statusLocation = executeResponse.getAttribute('statusLocation');
+
+                sF.postman.timeout = setTimeout(function () {
+                  sF.postman.send(false);
+                }, 2000);
+              }
+            } else if (processStarted.length > 0) {
+              //console.log('processStarted');
+
+              if (processStarted[0].hasAttribute('percentCompleted')) {
+                var percentCompleted = processStarted[0].getAttribute('percentCompleted');
+
+                ((sF.loader.initialized) ? sF.loader.updatePercents(sF.loader.mainBox,percentCompleted) : null);
+
+                //console.log('Percent: ' + percentCompleted);
+              }
 
               sF.postman.timeout = setTimeout(function () {
                 sF.postman.send(false);
-              }, 2000);
+              }, 1000);
             }
-          } else if (processStarted.length > 0) {
-            //console.log('processStarted');
-
-            if (processStarted[0].hasAttribute('percentCompleted')) {
-              var percentCompleted = processStarted[0].getAttribute('percentCompleted');
-
-              ((sF.loader.initialized) ? sF.loader.updatePercents(sF.loader.mainBox,percentCompleted) : null);
-
-              //console.log('Percent: ' + percentCompleted);
-            }
-
-            sF.postman.timeout = setTimeout(function () {
-              sF.postman.send(false);
-            }, 1000);
           }
+        } else {
+            if (sF.postman.statusLocation != null) {
+              sF.postman.timeout = setTimeout(function () {
+                sF.postman.send(false);
+              }, 1000);
+            } else {
+              window.alert('Chyba komunikace se serverem!');
+            }
         }
-
       },
 
       send: function(firstSending) {

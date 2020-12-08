@@ -29,6 +29,9 @@
   color: lime;
   content: "\ea10"; }
 
+.sf-main-box {
+  position: relative; }
+
 .sf-loader {
   position: absolute;
   top: 0;

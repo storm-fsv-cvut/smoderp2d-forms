@@ -14,7 +14,31 @@
 
   <body>
 
-    <div id="jsf-mainbox">
+    <div class="sf-main-box" id="jsf-mainbox">
+      <h2>Obecná data</h2>
+
+      <label for="rozliseni">Rozlišení:</label>
+      <input type="number" name="rozliseni" id="rozliseni" value="1" />
+      m
+      <br />
+
+      <label for="delka_simulace">Délka simnulace:</label>
+      <input type="number" name="delka_simulace" id="delka_simulace" value="15" />
+      min
+      <br />
+
+      <label for="maximalni_dt">Maximální dt:</label>
+      <input type="number" name="maximalni_dt" id="maximalni_dt" value="1" />
+      s
+      <br />
+
+      <label for="sirka_svahu">Šířka svahu:</label>
+      <input type="number" name="sirka_svahu" id="sirka_svahu" value="" />
+      m
+      <br />
+
+      <br /><hr /> <!-- -------------------------------- MMK SRÁŽKA ---------------------------------------- -->
+
       <h2>Srážka</h2>
 
       <table class="sf-table">
@@ -44,7 +68,17 @@
         </tr>
       </table>
 
+      <br />
+
       <div id="jsf-section-add" class="sf-button">Přidat řádek</div>
+
+      <br /><br /><hr /> <!-- -------------------------------- ODESLÁNÍ FORMUÁŘE ---------------------------------------- -->
+
+      <h2>Captcha</h2>
+      Nějaká CAPTCHA
+
+      <br /><br /><hr /><br /> <!-- -------------------------------- ODESLÁNÍ FORMUÁŘE ---------------------------------------- -->
+
 
       <div id="jsf-postman" class="sf-button">Spočítej</div>
 
