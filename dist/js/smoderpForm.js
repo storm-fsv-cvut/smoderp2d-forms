@@ -1,12 +1,14 @@
 (function () {
   var sF = {
     places: 2, // počet desetinných míst používaných čísel
+    dictionaryUrl: null,
+    dictionaryJSON: null,
     endpointUrl: 'https://rain1.fsv.cvut.cz:4444/services/wps/',//'http://rain1.fsv.cvut.cz:8080/services/wps/', //'http://geo102.fsv.cvut.cz:80/services/yfsgwps', //'http://geo102.fsv.cvut.cz/services/yfsgwps', //'response.xml', //'https://rain1.fsv.cvut.cz/services/wps',
     userRainFalls: [],
     fifteenRainFallValue: null,
     globalColumnTexts: {
-      'measures': ['Název','Kód','Drsnost podle Maninga','Zachycené množství vody opatřením [mm]','Poměr zachycení [-]','Povrchová retence [mm]','Maximální tečné napětí [Pa]', 'Maximální rychlost [m/s)]'],
-      'surfaces': ['Název','Kód','k','s','b','x','y']
+      'measures': ['ms_name','ms_code','ms_roughness','ms_captured','ms_ratio','ms_retention','ms_tangential', 'ms_maxspeed'],
+      'surfaces': ['srf_name','srf_code','k','s','b','x','y']
     },
     globalColumnNames: {
       'measures': ['name','code','n','pi','ppl','ret','tau','v'],
@@ -15,7 +17,7 @@
     globalData: {
       'measures': {
         0: {
-          'name': 'Bez opatření',
+          'name': 'ms_non',
           'code': 'NON',
           'n': 0,
           'pi': 0,
@@ -25,7 +27,7 @@
           'v': 0
         },
         1: {
-          'name': 'Geotextilie',
+          'name': 'ms_geo',
           'code': 'GEO',
           'n': 0.0035,
           'pi': 5,
@@ -35,7 +37,7 @@
           'v': 2.36
         },
         2: {
-          'name': 'PVC',
+          'name': 'ms_pvc',
           'code': 'PVC',
           'n': 0.25,
           'pi': 0.1,
@@ -47,7 +49,7 @@
       },
       'surfaces': {
         0: {
-          'name': 'Hlinitá',
+          'name': 'srf_clay',
           'code': 'HH',
           'k': 3,
           's': 0.000000000001,
@@ -56,7 +58,7 @@
           'y': 15.1
         },
         1: {
-          'name': 'Hlinitopísčitá',
+          'name': 'srf_clay_sandy',
           'code': 'HP',
           'k': 0.000000000001,
           's': 0.000000000001,
@@ -65,7 +67,7 @@
           'y': 15.1
         },
         2: {
-          'name': 'Hlininá (USDA)',
+          'name': 'srf_usda',
           'code': 'HUSD',
           'k': 0.000000000001,
           's': 0.000000000001,
@@ -577,7 +579,7 @@
 
         option = document.createElement('OPTION');
         option.setAttribute('value', 'needSelect');
-        option.text = 'Vyberte';
+        option.text = sF.dictionary.getValue('choose');
         select.appendChild(option);
 
 
@@ -591,7 +593,7 @@
 
         option = document.createElement('OPTION');
         option.setAttribute('value', 'addNew');
-        option.text = 'Přidej další';
+        option.text = sF.dictionary.getValue('add_another');
         select.appendChild(option);
 
         select.addEventListener('change', function(e) {
@@ -772,9 +774,9 @@
           // table header
           row = sF.rainfall.userValuesTable.insertRow();
           cell = row.insertCell(0);
-          cell.innerHTML = 'Čas [min]';
+          cell.innerHTML = sF.dictionary.getValue('time_minutes');
           cell = row.insertCell(1);
-          cell.innerHTML = 'Kumulativní srážka [mm]';
+          cell.innerHTML = sF.dictionary.getValue('cumulative_deduction');
 
           // table data - rows
           for (var i = 0; i < sF.userRainFalls.length; i++) {
@@ -1512,14 +1514,71 @@
       }
     },
 
-    init: function() {
-      console.log('Init start.');
+    dictionary: {
+      getValue: function(code) {
+        if (sF.dictionaryJSON[code]) {
+          return sF.dictionaryJSON[code];
+        }
+        return code;
+      },
+
+      processAndStartInit: function(dictionary) {
+        sF.dictionaryJSON = dictionary;
+
+        for (var i = 0; i < sF.globalColumnTexts['measures'].length; i++) {
+          sF.globalColumnTexts['measures'][i] = sF.dictionary.getValue(sF.globalColumnTexts['measures'][i]);
+        }
+
+        for (var i = 0; i < sF.globalColumnTexts['surfaces'].length; i++) {
+          sF.globalColumnTexts['surfaces'][i] = sF.dictionary.getValue(sF.globalColumnTexts['surfaces'][i]);
+        }
+
+        var i = 0,
+        obj = null;
+        while (sF.globalData['measures'][i]) {
+          sF.globalData['measures'][i]['name'] = sF.dictionary.getValue(sF.globalData['measures'][i]['name']);
+          i++;
+        }
+
+        var i = 0;
+        while (sF.globalData['surfaces'][i]) {
+          sF.globalData['surfaces'][i]['name'] = sF.dictionary.getValue(sF.globalData['surfaces'][i]['name']);
+          i++;
+        }
+
+        sF.initAfterDictionaryLoaded();
+      },
+
+      getDictionary: function() {
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+          if ((xhttp.readyState == 4) && (xhttp.status == 200)) {
+            var dictionary = JSON.parse(this.responseText);
+            sF.dictionary.processAndStartInit(dictionary);
+          }
+        };
+        xhttp.open("GET", sF.dictionaryUrl, true);
+        xhttp.send();
+      },
+
+      init: function() {
+        if (window.location.hostname == 'localhost') {
+          var url = window.location.href;
+          sF.dictionaryUrl = url.substring(0, url.lastIndexOf("/")) + '/dictionary.json';
+        } else {
+          sF.dictionaryUrl = window.location.protocol + '//' + window.location.hostname + '/ep.php?get=dictionary';
+        }
+
+        sF.dictionary.getDictionary();
+      }
+    },
+
+    initAfterDictionaryLoaded: function() {
       sF.section.init();
       sF.modal.init();
       sF.meSu.init('measures');
       sF.meSu.init('surfaces');
       sF.rainfall.init();
-      sF.loader.init();
       sF.postman.init();
       sF.charts.init();
 
@@ -1530,6 +1589,11 @@
           }
         }
       }
+    },
+
+    init: function() {
+      sF.loader.init();
+      sF.dictionary.init();
     }
   }
 
