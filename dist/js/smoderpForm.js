@@ -1347,8 +1347,11 @@
                 '\t\t\t\t<ows:Identifier>config</ows:Identifier>\n' +
                 '\t\t\t\t<wps:Data>\n' +
                   '\t\t\t\t\t<wps:ComplexData mimeType="text/plain"><![CDATA[[domain]\n'+
-                  '# spatial resolution in meters\n' +
-	          'res: 1]]></wps:ComplexData>\n' +
+                    '\t\t\t\t\t\tres: 1\n' +
+                    '\t\t\t\t\t\t[time]\n' +
+                    '\t\t\t\t\t\tmaxdt: 30\n' +
+                    '\t\t\t\t\t\tendtime: 60\n' +
+                '\t\t\t\t\t]]></wps:ComplexData>\n' +
                 '\t\t\t\t</wps:Data>\n' +
               '\t\t\t</wps:Input>\n' +
             '\t\t</wps:DataInputs>\n' +
@@ -1358,7 +1361,7 @@
                   '\t\t\t\t\t<ows:Identifier>profile</ows:Identifier>\n' +
                 '\t\t\t\t</wps:Output>\n' +
                 '\t\t\t\t<wps:Output asreference="true" mimeType="text/csv">\n' +
-                  '\t\t\t\t\t<ows:Identifier>hydrogram</ows:Identifier>\n' +
+                  '\t\t\t\t\t<ows:Identifier>hydrograph</ows:Identifier>\n' +
                 '\t\t\t\t</wps:Output>\n' +
               '\t\t\t</wps:ResponseDocument>\n' +
             '\t\t</wps:ResponseForm>' +
@@ -1561,15 +1564,23 @@
         xhttp.send();
       },
 
+      setDictionary: function() {
+        var text = '{"smoderp":"SMODERP","epizodni_model":"Epizodn\u00ed hydrologicko-erozn\u00ed model","ms_name":"N\u00e1zev","ms_code":"K\u00f3d","ms_roughness":"Drsnost podle Maninga","ms_captured":"Zachycen\u00e9 mno\u017estv\u00ed vody opat\u0159en\u00edm [mm]","ms_ratio":"Pom\u011br zachycen\u00ed [-]","ms_retention":"Povrchov\u00e1 retence [mm]","ms_tangential":"Maxim\u00e1ln\u00ed te\u010dn\u00e9 nap\u011bt\u00ed [Pa]","ms_maxspeed":"Maxim\u00e1ln\u00ed rychlost [m\/s)]","ms_non":"Bez opat\u0159en\u00ed","ms_geo":"Geotextilie","ms_pvc":"PVC","srf_name":"N\u00e1zev","srf_code":"K\u00f3d","srf_clay":"Hlinit\u00e1","srf_clay_sandy":"Hlinitop\u00eds\u010dit\u00e1","srf_usda":"Hlinin\u00e1 (USDA)","choose":"Vyberte","add_another":"P\u0159idej dal\u0161\u00ed","distinction":"Rozli\u0161en\u00ed","sim_length":"D\u00e9lka simnulace","maximum_dt":"Maxim\u00e1ln\u00ed dt","slope_width":"\u0160\u00ed\u0159ka svahu","rainfall":"Sr\u00e1\u017eka","choose_select":"Vyberte mo\u017enost","user_rainfall":"U\u017eivatelsk\u00e1 sr\u00e1\u017eka","max_fifteen_minutes":"Maxim\u00e1ln\u00ed 15ti minutov\u00fd d\u00e9\u0161t","rainfall_by_location":"V\u00fdb\u011br sr\u00e1\u017eky podle polohy","setup":"Nastavit","section_number":"\u010c\u00edslo \u00faseku","projection":"Pr\u016fm\u011bt [m]","height_meters":"V\u00fd\u0161ka [m]","ratio":"Pom\u011br","protective_measures":"Ochrann\u00e9 oprat\u0159en\u00ed","soil":"P\u016fda","add_row":"P\u0159idat \u0159\u00e1dek","count":"Spo\u010d\u00edtej","add_measures":"P\u0159idat vlastn\u00ed ochrann\u00e9 opat\u0159en\u00ed","add":"P\u0159idat","add_surface":"P\u0159idej vlastn\u00ed p\u016fdu","delete_all":"V\u0161e smazat","ok":"OK","fifteen_rain":"15ti minutov\u00fd d\u00e9\u0161\u0165","max_rain":"Maxim\u00e1ln\u00ed intenzita 15ti minutov\u00e9ho de\u0161t\u011b","general_data":"Obecn\u00e1 data","time_minutes":"\u010cas [min]","cumulative_deduction":"Kumulativn\u00ed sr\u00e1\u017eka [mm]"}';
+        var dictionary = JSON.parse(text);
+        sF.dictionary.processAndStartInit(dictionary);
+      },
+
       init: function() {
-        if (window.location.hostname == 'localhost') {
+        if (!window.location.hostname) {
+          sF.dictionary.setDictionary();
+        } else if (window.location.hostname == 'localhost') {
           var url = window.location.href;
           sF.dictionaryUrl = url.substring(0, url.lastIndexOf("/")) + '/dictionary.json';
+          sF.dictionary.getDictionary();
         } else {
           sF.dictionaryUrl = window.location.protocol + '//' + window.location.hostname + '/ep.php?get=dictionary';
+          sF.dictionary.getDictionary();
         }
-
-        sF.dictionary.getDictionary();
       }
     },
 
