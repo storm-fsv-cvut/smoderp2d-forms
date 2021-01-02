@@ -19,12 +19,12 @@
         0: {
           'name': 'ms_non',
           'code': 'NON',
-          'n': 0,
-          'pi': 0,
-          'ppl': 0,
-          'ret': 0,
-          'tau': 0,
-          'v': 0
+          'n': 0.035,
+          'pi': 1.1,
+          'ppl': 2.0,
+          'ret': 2.1,
+          'tau': 22.3,
+          'v': 0.27
         },
         1: {
           'name': 'ms_geo',
@@ -51,7 +51,7 @@
         0: {
           'name': 'srf_clay',
           'code': 'HH',
-          'k': 3,
+          'k': 0.000000000001,
           's': 0.000000000001,
           'b': 0.52,
           'x': 10.3,
@@ -111,6 +111,81 @@
           sF.removeClass(rows[order],'jsf-invalid');
           sF.addClass(rows[order],'jsf-valid');
           break;
+      }
+    },
+
+    mode: {
+      formBox: null,
+      resultBox: null,
+
+      showEl: function(el) {
+        el.style.display = 'block';
+        el.style.visibility = 'visible';
+      },
+
+      hideEl: function(el) {
+        el.style.display = 'none';
+        el.style.visibility = 'hidden';
+      },
+
+      showForm: function() {
+        sF.mode.hideEl(sF.mode.resultBox);
+        sF.mode.showEl(sF.mode.formBox);
+
+        if (sF.outputs.accepted) {
+          var toResultHandlers = document.getElementsByClassName('jsf-to-result-handler');
+          for (var i = 0; i < toResultHandlers.length; i++) {sF.mode.showEl(toResultHandlers[i]);}
+          var toFormHandlers = document.getElementsByClassName('jsf-to-form-handler');
+          for (var i = 0; i < toFormHandlers.length; i++) {sF.mode.hideEl(toFormHandlers[i]);}
+        }
+
+        sF.mode.bindHandlers(sF.mode.formBox);
+      },
+
+      showResults: function() {
+        sF.mode.hideEl(sF.mode.formBox);
+        sF.mode.showEl(sF.mode.resultBox);
+
+        var toFormHandlers = document.getElementsByClassName('jsf-to-form-handler');
+        for (var i = 0; i < toFormHandlers.length; i++) {sF.mode.showEl(toFormHandlers[i]);}
+        var toResultHandlers = document.getElementsByClassName('jsf-to-result-handler');
+        for (var i = 0; i < toResultHandlers.length; i++) {sF.mode.hideEl(toResultHandlers[i]);}
+
+        sF.mode.bindHandlers(sF.mode.resultBox);
+      },
+
+      bindHandlers: function(target) {
+        console.log('Binding handlers!');
+        var toFormHandlers = target.getElementsByClassName('jsf-to-form-handler');
+        for (var i = 0; i < toFormHandlers.length; i++) {
+          if (!toFormHandlers[i].hasAttribute('data-mode-handler')) {
+            toFormHandlers[i].addEventListener('click', function() {
+              sF.mode.showForm();
+            });
+            toFormHandlers[i].setAttribute('data-mode-handler','true');
+          }
+        }
+        var toResultHandlers = target.getElementsByClassName('jsf-to-result-handler');
+        for (var i = 0; i < toResultHandlers.length; i++) {
+          if (!toResultHandlers[i].hasAttribute('data-mode-handler')) {
+            toResultHandlers[i].addEventListener('click', function() {
+              sF.mode.showResults();
+            });
+            toResultHandlers[i].setAttribute('data-mode-handler','true');
+          }
+        }
+      },
+
+      init: function() {
+        var formBox = document.getElementById('jsf-mainbox'),
+            resultBox = document.getElementById('jsf-resultbox');
+
+        if ((formBox) && (resultBox)) {
+          sF.mode.formBox = formBox;
+          sF.mode.resultBox = resultBox;
+          return true;
+        }
+        return false;
       }
     },
 
@@ -384,13 +459,15 @@
       },
 
       lastSelectToFirstOption: function() {
-        if ((sF.section.lastSelect.nodeName === 'select') || (sF.section.lastSelect.nodeName === 'SELECT')) {
-          var options = sF.section.lastSelect.getElementsByTagName('OPTION'),
-              order = null;
+        if (sF.section.lastSelect) {
+          if ((sF.section.lastSelect.nodeName === 'select') || (sF.section.lastSelect.nodeName === 'SELECT')) {
+            var options = sF.section.lastSelect.getElementsByTagName('OPTION'),
+                order = null;
 
-          ((sF.section.lastSelect.hasAttribute('data-order')) ? order = sF.section.lastSelect.getAttribute('data-order') : order = 0);
-          sF.section.lastSelect.value = options[0].value;
-          sF.section.isValid(order);
+            ((sF.section.lastSelect.hasAttribute('data-order')) ? order = sF.section.lastSelect.getAttribute('data-order') : order = 0);
+            sF.section.lastSelect.value = options[0].value;
+            sF.section.isValid(order);
+          }
         }
         // TODO not good solution
         if (sF.section.lastSelect == sF.rainfall.mainSelect) {
@@ -965,7 +1042,7 @@
     outputs: {
       accepted: false,
       profileCsvData: '',
-      hydrogramCsvData: '',
+      hydrographCsvData: '',
       hdgTime: [],
       hdgDeltaTime: [],
       hdgRain: [],
@@ -1005,7 +1082,7 @@
           sF.outputs.prfMaxTangentialStress = [];
           sF.outputs.prfRillRunoff = [];
 
-          row = sF.outputs.hydrogramCsvData.split('\n');
+          row = sF.outputs.hydrographCsvData.split('\n');
           for (var i = 1; i < row.length; i++) {
             cell = row[i].split(',');
             sF.outputs.hdgTime.push(cell[0]);
@@ -1248,6 +1325,7 @@
     },
 
     postman: {
+      lastRequestXML: false,
       initialized: false,
       finalXML: null,
       button: null,
@@ -1367,44 +1445,90 @@
             '\t\t</wps:ResponseForm>' +
           '\t</wps:Execute>';
 
+        sF.postman.lastRequestXML = text;
+
         return text;
       },
 
+      processErrorResponse: function(xmlFile) {
+        console.log('Processing error response.');
+
+        var status = xmlFile.getElementsByTagName('wps:Status')[0],
+            processFailed = status.getElementsByTagName('wps:ProcessFailed')[0],
+            exceptions = processFailed.getElementsByTagName('ows:Exception'),
+            code = null,
+            text = null,
+            summary = '';
+
+        for (var i = 0; i < exceptions.length; i++) {
+          text = exceptions[i].getElementsByTagName('ows:ExceptionText')[0].innerHTML;
+          summary += text + ' Error code: ' + exceptions[i].getAttribute('exceptionCode') + ', locator: ' + exceptions[i].getAttribute('locator') + '.<br />\n';
+        }
+
+        var errorReport = document.getElementById('jsf-error-report');
+        if (errorReport) {
+          errorReport.innerHTML = summary;
+        }
+
+        var errorAnchorXML = document.getElementById('jsf-error-xmlswnl');
+        if (errorAnchorXML) {
+          var errorXML = sF.postman.lastRequestXML;
+              errorXMLUri = 'data:text/plain,' + encodeURIComponent(errorXML);
+          errorAnchorXML.href = errorXMLUri;
+        }
+
+        sF.modal.open('error');
+      },
+
       processFinalResponse: function() {
-        console.log('Processing final response!');
+        console.log('Processing final response.');
 
-        var identifier = null,
-            idValue = null,
-            data = null,
+        var processOutputs = sF.postman.finalXML.getElementsByTagName('wps:ProcessOutputs')[0],
+            outputs = processOutputs.getElementsByTagName('wps:Output'),
+            outputIdentifier = null,
+            outputIdentifierValue = null,
             complexData = null,
-            outputs = sF.postman.finalXML.getElementsByTagName('wps:Output');
+            complexDataValue = null;
 
-        for (var i=0; i<outputs.length; i++) {
-          identifier = outputs[i].getElementsByTagName('ows:Identifier')[0];
-          if (identifier) {
-            complexData = outputs[i].getElementsByTagName('wps\:ComplexData')[0];
-            if (complexData) {
-              idValue = identifier.childNodes[0].textContent;
-              data = complexData.childNodes[0].textContent;
+        for (var i = 0; i < outputs.length; i++) {
+          outputIdentifier = outputs[i].getElementsByTagName('ows:Identifier')[0];
+          outputIdentifierValue = outputIdentifier.childNodes[0].textContent;
+          complexData = outputs[i].getElementsByTagName('wps:ComplexData')[0];
+          complexDataValue = complexData.childNodes[0].textContent;
 
-              switch (idValue) {
-                case 'profile':
-                  sF.outputs.profileCsvData = data;
-                  break;
-                case 'hydrogram':
-                  sF.outputs.hydrogramCsvData = data;
-                  break;
-              }
+          if ((outputIdentifierValue) && (complexDataValue)) {
+            switch (outputIdentifierValue) {
+              case 'profile':
+                sF.outputs.profileCsvData = complexDataValue;
+                break;
+              case 'hydrograph':
+                sF.outputs.hydrographCsvData = complexDataValue;
+                break;
             }
           }
         }
 
-        if ((sF.outputs.profileCsvData) && (sF.outputs.hydrogramCsvData)) {
+        sF.mode.showResults();
+
+        if ((sF.outputs.profileCsvData) && (sF.outputs.hydrographCsvData)) {
           if (sF.outputs.accepted === false) {
             sF.outputs.accepted = true;
             sF.charts.createForms();
           } else {
             sF.charts.updateForms();
+          }
+
+          // creating data anchors
+          var profileAnchor = document.getElementById('jsf-profile-achor');
+          if (profileAnchor) {
+            var profileUri = 'data:text/csv;charset=UTF-8,' + encodeURIComponent(sF.outputs.profileCsvData);
+            profileAnchor.href = profileUri;
+          }
+
+          var hydrographAnchor = document.getElementById('jsf-hydrograph-achor');
+          if (hydrographAnchor) {
+            var hydrographUri = 'data:text/csv;charset=UTF-8,' + encodeURIComponent(sF.outputs.hydrographCsvData);
+            hydrographAnchor.href = hydrographUri;
           }
         }
       },
@@ -1415,10 +1539,14 @@
           var status = xmlFile.getElementsByTagName('wps:Status')[0],
               processSucceeded = status.getElementsByTagName('wps:ProcessSucceeded'),
               processAccepted = status.getElementsByTagName('wps:ProcessAccepted'),
-              processStarted = status.getElementsByTagName('wps:ProcessStarted');
+              processStarted = status.getElementsByTagName('wps:ProcessStarted'),
+              processFailed = status.getElementsByTagName('wps:ProcessFailed');
 
-
-          if (processSucceeded.length > 0) {
+          if (processFailed.length > 0) {
+            ((sF.loader.initialized) ? sF.loader.quickHide(sF.loader.mainBox) : null);
+            sF.postman.processErrorResponse(xmlFile);
+          }
+          else if (processSucceeded.length > 0) {
 
             ((sF.loader.initialized) ? sF.loader.updatePercents(sF.loader.mainBox,100) : null);
             sF.postman.finalXML = xmlFile;
@@ -1458,7 +1586,7 @@
 
               sF.postman.timeout = setTimeout(function () {
                 sF.postman.send(false);
-              }, 1000);
+              }, 2000);
             }
           }
         } else {
@@ -1585,20 +1713,25 @@
     },
 
     initAfterDictionaryLoaded: function() {
-      sF.section.init();
-      sF.modal.init();
-      sF.meSu.init('measures');
-      sF.meSu.init('surfaces');
-      sF.rainfall.init();
-      sF.postman.init();
-      sF.charts.init();
+      if (sF.mode.init()) {
+        sF.mode.showForm();
+        sF.section.init();
+        sF.modal.init();
+        sF.meSu.init('measures');
+        sF.meSu.init('surfaces');
+        sF.rainfall.init();
+        sF.postman.init();
+        sF.charts.init();
 
-      window.onkeydown = function(e) {
-        if (e.keyCode == 27) {
-          if ((sF.modal.initialized === true) && (sF.modal.opened === true)) {
-            sF.modal.close(true);
+        window.onkeydown = function(e) {
+          if (e.keyCode == 27) {
+            if ((sF.modal.initialized === true) && (sF.modal.opened === true)) {
+              sF.modal.close(true);
+            }
           }
         }
+      } else {
+        window.alert('Fatal error. Please contact admin.');
       }
     },
 

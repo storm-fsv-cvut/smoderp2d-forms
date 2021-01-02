@@ -82,6 +82,8 @@
 
       <div id="jsf-postman" class="sf-button">Spočítej</div>
 
+      <p><span class="jsf-to-result-handler" style="display: none; visibility: hidden;">Zpět na poslední výsledky</span></p>
+
     </div>
 
     <div id="jsf-modal" class="sf-modal">
@@ -122,26 +124,40 @@
 
           <div id="jsf-rainfall-fifteen-add" class="sf-button">OK</div>
         </div>
+        <div id="jsf-error" class="sf-modal__box jsf-box">
+          <h2>Nastala chyba ve výpočtu</h2>
+          <p id="jsf-error-report"></p>
+          <p><a id="jsf-error-xmlswnl" download="wrongRequest.xml">Stáhnout chybné XML</a></p>
+        </div>
       </div>
       <div class="sf-modal__shadow jsf-modal-closer"></div>
     </div>
 
-    <br />
+    <div id="jsf-resultbox">
+      <p><span class="jsf-to-form-handler">Zpět na formulář</span></p>
+      <br />
 
-    <div style="width: 1200px; max-height: 800px">
-      <canvas id="jsf-surfaceVolRunoff"></canvas>
-    </div>
+      <ul>
+        <li><a id="jsf-profile-achor" download="profile.csv" target="_blank">Stáhnout Profile CSV</a></li>
+        <li><a id="jsf-hydrograph-achor" download="hydrograph.csv" target="_blank">Stáhnout Hydrograph CSV</a></li>
+      </ul>
 
-    <br />
+      <div style="width: 1200px; max-height: 800px">
+        <canvas id="jsf-surfaceVolRunoff"></canvas>
+      </div>
 
-    <div style="width: 1200px; max-height: 800px">
-      <canvas id="jsf-surfaceChartTwo"></canvas>
-    </div>
+      <br />
 
-    <br />
+      <div style="width: 1200px; max-height: 800px">
+        <canvas id="jsf-surfaceChartTwo"></canvas>
+      </div>
 
-    <div style="width: 1200px; max-height: 800px">
-      <canvas id="jsf-profileChartOne"></canvas>
+      <br />
+
+      <div style="width: 1200px; max-height: 800px">
+        <canvas id="jsf-profileChartOne"></canvas>
+      </div>
+
     </div>
 
     <script src="js/Chart.bundle.min.js"></script>
