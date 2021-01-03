@@ -1,6 +1,7 @@
 (function () {
   var sF = {
-    places: 2, // počet desetinných míst používaných čísel
+    places: 2, // počet desetinných míst používaných čísel ve formuláři
+    placesInXml: 12, // počet desetinných míst používaných čísel při výpočtech
     dictionaryUrl: null,
     dictionaryJSON: null,
     endpointUrl: 'https://rain1.fsv.cvut.cz:4444/services/wps/',//'http://rain1.fsv.cvut.cz:8080/services/wps/', //'http://geo102.fsv.cvut.cz:80/services/yfsgwps', //'http://geo102.fsv.cvut.cz/services/yfsgwps', //'response.xml', //'https://rain1.fsv.cvut.cz/services/wps',
@@ -531,7 +532,7 @@
                 sF.section.isValid(order);
               } else if (sF.section.isRatioValueCorrect(ratioValue)) {
                 var newValue = projectionValue / sF.section.getRatioValue(ratioValue);
-                heightInput.value = sF.round(newValue,2);
+                heightInput.value = sF.round(newValue,sF.places);
                 //sF.markRow(sF.section.mainTable,order,'valid');
                 sF.section.isValid(order);
               }
@@ -544,7 +545,7 @@
                 sF.section.isValid(order);
               } else if (sF.section.isRatioValueCorrect(ratioValue)) {
                 var newValue = heightValue * sF.section.getRatioValue(ratioValue);
-                projectionInput.value = sF.round(newValue,2);
+                projectionInput.value = sF.round(newValue,sF.places);
                 //sF.markRow(sF.section.mainTable,order,'valid');
                 sF.section.isValid(order);
               }
@@ -1359,7 +1360,7 @@
           actualRatioNumber = actualHeightValue / actualProjectionValue;
 
           if (!isNaN(actualRatioNumber)) {
-            actualRatioNumber = actualRatioNumber.toFixed(11);
+            actualRatioNumber = actualRatioNumber.toFixed(sF.placesInXml);
             str = actualProjectionValue + ';' + actualHeightValue + ';' + actualMeasuresValue + ';' + actualSurfacesValue + ';' + actualRatioNumber + '\n';
             retString += str;
           }
@@ -1375,17 +1376,17 @@
         for (var i=0; i < sF.meSu.counters['surfaces']; i++) {
           for (var j=0; j < sF.meSu.counters['measures']; j++) {
             str = sF.globalData['surfaces'][i]['code'] + sF.globalData['measures'][j]['code'] + ';' +
-                  sF.globalData['surfaces'][i]['k'].toFixed(11) + ';' +
-                  sF.globalData['surfaces'][i]['s'].toFixed(11) + ';' +
-                  sF.globalData['measures'][j]['n'].toFixed(11) + ';' +
-                  sF.globalData['measures'][j]['pi'].toFixed(11) + ';' +
-                  sF.globalData['measures'][j]['ppl'].toFixed(11) + ';' +
-                  sF.globalData['measures'][j]['ret'].toFixed(11) + ';' +
-                  sF.globalData['surfaces'][i]['b'].toFixed(11) + ';' +
-                  sF.globalData['surfaces'][i]['x'].toFixed(11) + ';' +
-                  sF.globalData['surfaces'][i]['y'].toFixed(11) + ';' +
-                  sF.globalData['measures'][j]['tau'].toFixed(11) + ';' +
-                  sF.globalData['measures'][j]['v'].toFixed(11) + '\n';
+                  sF.globalData['surfaces'][i]['k'].toFixed(sF.placesInXml) + ';' +
+                  sF.globalData['surfaces'][i]['s'].toFixed(sF.placesInXml) + ';' +
+                  sF.globalData['measures'][j]['n'].toFixed(sF.placesInXml) + ';' +
+                  sF.globalData['measures'][j]['pi'].toFixed(sF.placesInXml) + ';' +
+                  sF.globalData['measures'][j]['ppl'].toFixed(sF.placesInXml) + ';' +
+                  sF.globalData['measures'][j]['ret'].toFixed(sF.placesInXml) + ';' +
+                  sF.globalData['surfaces'][i]['b'].toFixed(sF.placesInXml) + ';' +
+                  sF.globalData['surfaces'][i]['x'].toFixed(sF.placesInXml) + ';' +
+                  sF.globalData['surfaces'][i]['y'].toFixed(sF.placesInXml) + ';' +
+                  sF.globalData['measures'][j]['tau'].toFixed(sF.placesInXml) + ';' +
+                  sF.globalData['measures'][j]['v'].toFixed(sF.placesInXml) + '\n';
 
             retString += str;
           }
