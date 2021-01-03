@@ -1426,7 +1426,7 @@
                 '\t\t\t\t<ows:Identifier>config</ows:Identifier>\n' +
                 '\t\t\t\t<wps:Data>\n' +
                   '\t\t\t\t\t<wps:ComplexData mimeType="text/plain"><![CDATA[[domain]\n'+
-                    '\t\t\t\t\t\tres: 1\n' +
+                    '\t\t\t\t\t\tres: 5\n' +
                     '\t\t\t\t\t\t[time]\n' +
                     '\t\t\t\t\t\tmaxdt: 30\n' +
                     '\t\t\t\t\t\tendtime: 60\n' +
