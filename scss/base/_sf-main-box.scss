@@ -1,0 +1,20 @@
+.sf-main-box {
+
+  &.is--table-select {
+    width: 10vw;
+    min-width: 100px;
+    max-width: 150px;
+    box-sizing: border-box;
+    overflow: hidden;
+    white-space: pre;
+    text-overflow: ellipsis;
+
+    option {
+      border: solid 1px #DDDDDD;
+    }
+  }
+
+  &.is--table-input {
+
+  }
+}

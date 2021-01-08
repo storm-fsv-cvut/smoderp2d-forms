@@ -1,5 +1,6 @@
 (function () {
   var sF = {
+    debbuging: true,
     places: 2, // počet desetinných míst používaných čísel ve formuláři
     placesInXml: 12, // počet desetinných míst používaných čísel při výpočtech
     dictionaryUrl: null,
@@ -78,6 +79,8 @@
         }
       }
     },
+    surfaces: [],
+    measures: [],
 
     hasClass: function (el, className) {
       return el.classList ? el.classList.contains(className) : new RegExp('\\b'+ className+'\\b').test(el.className);
@@ -156,7 +159,7 @@
       },
 
       bindHandlers: function(target) {
-        console.log('Binding handlers!');
+        ((sF.debbuging) ? console.log('Info: Binding handlers on element: ' + target.tagName + ', with class: ' + target.className) : null);
         var toFormHandlers = target.getElementsByClassName('jsf-to-form-handler');
         for (var i = 0; i < toFormHandlers.length; i++) {
           if (!toFormHandlers[i].hasAttribute('data-mode-handler')) {
@@ -212,7 +215,8 @@
       open: function(boxName) {
         if (sF.modal.initialized) {
           var boxes = sF.modal.mainEl.getElementsByClassName('jsf-box'),
-              correctId = 'jsf-' + boxName;
+              correctId = 'jsf-' + boxName,
+              body = document.getElementsByTagName('BODY')[0];
 
           for (var i=0; i<boxes.length; i++) {
             if (boxes[i].id === correctId) {
@@ -224,6 +228,7 @@
             }
           }
 
+          body.style.overflow = 'hidden';
           sF.removeClass(sF.modal.mainEl, 'jsf-closed');
           sF.addClass(sF.modal.mainEl, 'jsf-open');
           sF.modal.bindClosers();
@@ -233,8 +238,10 @@
 
       close: function(mode) {
         if (sF.modal.initialized) {
+          var body = document.getElementsByTagName('BODY')[0];
           sF.removeClass(sF.modal.mainEl, 'jsf-open');
           sF.addClass(sF.modal.mainEl, 'jsf-closed');
+          body.style.overflow = 'auto';
         }
         if (mode) {
           sF.section.lastSelectToFirstOption();
@@ -313,7 +320,11 @@
             newObject[sF.globalColumnNames[code][i]] = inputValue;
           }
 
-          sF.globalData[code][sF.meSu.counters[code]] = newObject;
+          if (code == 'measures') {
+            sF.measures[sF.meSu.counters[code]] = newObject;
+          } else if (code == 'surfaces') {
+            sF.surfaces[sF.meSu.counters[code]] = newObject;
+          }
 
           sF.meSu.refill(code);
           sF.modal.close(false);
@@ -329,6 +340,7 @@
         inputName = code + '-' + name;
 
         input.setAttribute('name', inputName);
+        //input.setAttribute('class', 'sf-main-box is--table-input is--name'); // TODO is on modal
 
         if ((name === 'name') || (name === 'code')) {
           input.setAttribute('type', 'text');
@@ -366,9 +378,10 @@
       fill: function(code) {
         if (sF.meSu.inits[code] === true) {
           var row = null,
-              i = 0,
+              counter = 0,
               array = [],
-              cell = null;
+              cell = null,
+              data = null;
 
           // table header
           row = sF.meSu.globalTables[code].insertRow();
@@ -378,12 +391,18 @@
           }
 
           // table data - rows
-          while (sF.globalData[code][i]) {
+          if (code == 'measures') {
+            data = sF.measures;
+          } else if (code == 'surfaces') {
+            data = sF.surfaces;
+          }
+
+          while (data[counter]) {
             row = sF.meSu.globalTables[code].insertRow();
             array = [];
 
             for (var j=0; j<sF.globalColumnNames[code].length; j++) {
-              array.push(sF.globalData[code][i][sF.globalColumnNames[code][j]]);
+              array.push(data[counter][sF.globalColumnNames[code][j]]);
             }
 
             // table data - cells
@@ -391,11 +410,11 @@
               cell = row.insertCell(k);
               cell.innerHTML = array[k];
             }
-            i++;
+            counter++;
           }
 
           // important
-          sF.meSu.counters[code] = i;
+          sF.meSu.counters[code] = counter;
 
           // table inputs
           row = sF.meSu.globalTables[code].insertRow();
@@ -579,19 +598,24 @@
             inputName = name + '-' + sF.section.counter,
             eventName = 'input';
 
+        input.setAttribute('class', 'sf-main-box is--table-input is--' + name);
+
         if ((name === 'projection') || (name === 'height')) {
           input.setAttribute('step', '0.1');
           input.setAttribute('type', 'number');
           input.setAttribute('min', '0');
           input.setAttribute('value', '0');
+          input.setAttribute('size', '4');
+          input.setAttribute('maxlength', '4');
           eventName = 'input';
         } else if (name === 'ratio') {
           input.setAttribute('type', 'text');
           input.setAttribute('value', '0');
+          input.setAttribute('size', '6');
           eventName = 'change';
         }
 
-        input.setAttribute('size', 8);
+        //input.setAttribute('size', 8);
         input.setAttribute('name', inputName);
         input.setAttribute('data-type', name);
         input.setAttribute('data-order', sF.section.counter);
@@ -649,9 +673,11 @@
         var select = document.createElement('SELECT'),
             selectName = code + '-' + sF.section.counter,
             i = 0,
-            option = null;
+            option = null,
+            data = null;
 
         select.setAttribute('name', selectName);
+        select.setAttribute('class', 'sf-main-box is--table-select');
         select.setAttribute('data-type', code);
         select.setAttribute('data-order', sF.section.counter);
 
@@ -660,11 +686,16 @@
         option.text = sF.dictionary.getValue('choose');
         select.appendChild(option);
 
+        if (code == 'measures') {
+          data = sF.measures;
+        } else if (code == 'surfaces') {
+          data = sF.surfaces;
+        }
 
-        while (sF.globalData[code][i]) {
+        while (data[i]) {
           option = document.createElement('OPTION');
-          option.setAttribute('value', sF.globalData[code][i]['code']);
-          option.text = sF.globalData[code][i]['name'];
+          option.setAttribute('value', data[i]['code']);
+          option.text = data[i]['name'];
           select.appendChild(option);
           i++;
         }
@@ -882,7 +913,7 @@
           sF.userRainFalls.push([sF.rainfall.timeInput.value, sF.rainfall.rainfallInput.value]);
           sF.rainfall.refillUserValues();
           sF.rainfall.setSetupButton('user');
-          console.log('Adding new user Values');
+          ((sF.debbuging) ? console.log('Info: Adding new user Values') : null);
       },
 
       validatingFifteenValue: function() {
@@ -1240,80 +1271,93 @@
       mainBox: null,
 
       quickHide: function(destination) {
-        var loaders = destination.getElementsByClassName('jsf-loader');
-        for (var i = 0; i < loaders.length; i++) {
-          loaders[i].remove();
-        }
-      },
-
-      hide: function(destination) {
-        setTimeout(function() {
+        if (destination.hasAttribute('data-loader-showing')) {
           var loaders = destination.getElementsByClassName('jsf-loader');
           for (var i = 0; i < loaders.length; i++) {
             loaders[i].remove();
           }
-        }, 1000);
+          destination.removeAttribute("data-loader-showing");
+        }
+      },
+
+      hide: function(destination) {
+        if (destination.hasAttribute('data-loader-showing')) {
+          setTimeout(function() {
+            var loaders = destination.getElementsByClassName('jsf-loader');
+            for (var i = 0; i < loaders.length; i++) {
+              loaders[i].remove();
+            }
+          }, 1000);
+          destination.removeAttribute("data-loader-showing");
+        }
       },
 
       updatePercents: function(destination, percent) {
-        var showingPercent = 0;
+        if (destination.hasAttribute('data-loader-showing')) {
+          var showingPercent = 0;
 
-        var loaders = destination.getElementsByClassName('jsf-loader');
-        for (var i = 0; i < loaders.length; i++) {
-          var percentDivs = loaders[i].getElementsByClassName('jsf-loader-percent');
-          for (var j = 0; j < percentDivs.length; j++) {
-            if ((percent > 80) && (percent < 90)) {
-              showingPercent = percent + 10;
-            } else if (percent > 90) {
-              showingPercent = 100;
-            } else {
-              showingPercent = percent;
+          var loaders = destination.getElementsByClassName('jsf-loader');
+          for (var i = 0; i < loaders.length; i++) {
+            var percentDivs = loaders[i].getElementsByClassName('jsf-loader-percent');
+            for (var j = 0; j < percentDivs.length; j++) {
+              if ((percent > 80) && (percent < 90)) {
+                showingPercent = percent + 10;
+              } else if (percent > 90) {
+                showingPercent = 100;
+              } else {
+                showingPercent = percent;
+              }
+              percentDivs[j].style.width = showingPercent + '%';
             }
-            percentDivs[j].style.width = showingPercent + '%';
+            var numberDivs = loaders[i].getElementsByClassName('jsf-loader-number');
+            for (var k = 0; k < numberDivs.length; k++) {
+              numberDivs[k].innerHTML = percent + '%';
+            }
           }
-          var numberDivs = loaders[i].getElementsByClassName('jsf-loader-number');
-          for (var k = 0; k < numberDivs.length; k++) {
-            numberDivs[k].innerHTML = percent + '%';
-          }
+        } else {
+          console.log('Warning: reopen existing loader.');
         }
       },
 
       show: function(destination) {
-        var loader = document.createElement('div'),
-            loaderSymbol = document.createElement('div'),
-            div = null;
+        if (!destination.hasAttribute('data-loader-showing')) {
+          var loader = document.createElement('div'),
+              loaderSymbol = document.createElement('div'),
+              div = null;
 
-        loader.className = 'sf-loader jsf-loader';
-        loaderSymbol.className = 'sf-loader__symbol';
+          loader.className = 'sf-loader jsf-loader';
+          loaderSymbol.className = 'sf-loader__symbol';
 
-        for (var i=0; i<2; i++) {
-          div = document.createElement('div');
-          loaderSymbol.appendChild(div);
-        }
-
-        loader.appendChild(loaderSymbol);
-
-        var scaleDiv = document.createElement('div');
-        scaleDiv.className = 'sf-loader__scale';
-
-        var percentDiv = document.createElement('div');
-        percentDiv.className = 'sf-loader__percent jsf-loader-percent';
-
-        scaleDiv.appendChild(percentDiv);
-        loader.appendChild(scaleDiv);
-
-        var numberDiv = document.createElement('div');
-        numberDiv.className = 'sf-loader__number jsf-loader-number';
-
-        loader.appendChild(numberDiv);
-
-        setTimeout(function() {
-          if (loader.tagName) {
-            sF.addClass(loader,'jsf-open');
+          for (var i=0; i<2; i++) {
+            div = document.createElement('div');
+            loaderSymbol.appendChild(div);
           }
-        }, 1000);
 
-        destination.appendChild(loader);
+          loader.appendChild(loaderSymbol);
+
+          var scaleDiv = document.createElement('div');
+          scaleDiv.className = 'sf-loader__scale';
+
+          var percentDiv = document.createElement('div');
+          percentDiv.className = 'sf-loader__percent jsf-loader-percent';
+
+          scaleDiv.appendChild(percentDiv);
+          loader.appendChild(scaleDiv);
+
+          var numberDiv = document.createElement('div');
+          numberDiv.className = 'sf-loader__number jsf-loader-number';
+
+          loader.appendChild(numberDiv);
+
+          setTimeout(function() {
+            if (loader.tagName) {
+              sF.addClass(loader,'jsf-open');
+            }
+          }, 1000);
+
+          destination.appendChild(loader);
+          destination.setAttribute('data-loader-showing', 'true');
+        }
       },
 
       init: function() {
@@ -1332,6 +1376,8 @@
       button: null,
       statusLocation: null,
       timeout: null,
+      attempts: 0,
+      delay: 3000,
 
       getSelectionsData: function() {
         var str = '',
@@ -1375,18 +1421,18 @@
 
         for (var i=0; i < sF.meSu.counters['surfaces']; i++) {
           for (var j=0; j < sF.meSu.counters['measures']; j++) {
-            str = sF.globalData['surfaces'][i]['code'] + sF.globalData['measures'][j]['code'] + ';' +
-                  sF.globalData['surfaces'][i]['k'].toFixed(sF.placesInXml) + ';' +
-                  sF.globalData['surfaces'][i]['s'].toFixed(sF.placesInXml) + ';' +
-                  sF.globalData['measures'][j]['n'].toFixed(sF.placesInXml) + ';' +
-                  sF.globalData['measures'][j]['pi'].toFixed(sF.placesInXml) + ';' +
-                  sF.globalData['measures'][j]['ppl'].toFixed(sF.placesInXml) + ';' +
-                  sF.globalData['measures'][j]['ret'].toFixed(sF.placesInXml) + ';' +
-                  sF.globalData['surfaces'][i]['b'].toFixed(sF.placesInXml) + ';' +
-                  sF.globalData['surfaces'][i]['x'].toFixed(sF.placesInXml) + ';' +
-                  sF.globalData['surfaces'][i]['y'].toFixed(sF.placesInXml) + ';' +
-                  sF.globalData['measures'][j]['tau'].toFixed(sF.placesInXml) + ';' +
-                  sF.globalData['measures'][j]['v'].toFixed(sF.placesInXml) + '\n';
+            str = sF.surfaces[i]['code'] + sF.measures[j]['code'] + ';' +
+                  parseFloat(sF.surfaces[i]['k']).toFixed(sF.placesInXml) + ';' +
+                  parseFloat(sF.surfaces[i]['s']).toFixed(sF.placesInXml) + ';' +
+                  parseFloat(sF.measures[j]['n']).toFixed(sF.placesInXml) + ';' +
+                  parseFloat(sF.measures[j]['pi']).toFixed(sF.placesInXml) + ';' +
+                  parseFloat(sF.measures[j]['ppl']).toFixed(sF.placesInXml) + ';' +
+                  parseFloat(sF.measures[j]['ret']).toFixed(sF.placesInXml) + ';' +
+                  parseFloat(sF.surfaces[i]['b']).toFixed(2) + ';' +
+                  parseFloat(sF.surfaces[i]['x']).toFixed(0) + ';' +
+                  parseFloat(sF.surfaces[i]['y']).toFixed(2) + ';' +
+                  parseFloat(sF.measures[j]['tau']).toFixed(0) + ';' +
+                  parseFloat(sF.measures[j]['v']).toFixed(0) + '\n';
 
             retString += str;
           }
@@ -1426,7 +1472,7 @@
                 '\t\t\t\t<ows:Identifier>config</ows:Identifier>\n' +
                 '\t\t\t\t<wps:Data>\n' +
                   '\t\t\t\t\t<wps:ComplexData mimeType="text/plain"><![CDATA[[domain]\n'+
-                    '\t\t\t\t\t\tres: 5\n' +
+                    '\t\t\t\t\t\tres: 1\n' +
                     '\t\t\t\t\t\t[time]\n' +
                     '\t\t\t\t\t\tmaxdt: 30\n' +
                     '\t\t\t\t\t\tendtime: 60\n' +
@@ -1443,7 +1489,7 @@
                   '\t\t\t\t\t<ows:Identifier>hydrograph</ows:Identifier>\n' +
                 '\t\t\t\t</wps:Output>\n' +
               '\t\t\t</wps:ResponseDocument>\n' +
-            '\t\t</wps:ResponseForm>' +
+            '\t\t</wps:ResponseForm>\n' +
           '\t</wps:Execute>';
 
         sF.postman.lastRequestXML = text;
@@ -1451,8 +1497,36 @@
         return text;
       },
 
-      processErrorResponse: function(xmlFile) {
-        console.log('Processing error response.');
+      processAcceptedResponse: function(xmlFile) {
+        ((sF.debbuging) ? console.log('Info: process accepted, getting status location adress.') : null);
+
+        var executeResponse = xmlFile.getElementsByTagName('wps:ExecuteResponse')[0];
+        if (executeResponse.hasAttribute('statusLocation')) {
+          sF.postman.statusLocation = executeResponse.getAttribute('statusLocation');
+        }
+      },
+
+      processFinalStatusResponse: function() {
+        ((sF.debbuging) ? console.log('Info: set loader percentage value to 100.') : null);
+        ((sF.loader.initialized) ? sF.loader.updatePercents(sF.loader.mainBox,100) : null);
+      },
+
+      processStartedResponse: function(xmlFile) {
+        ((sF.debbuging) ? console.log('Info: process started, display of the percentage value in loader.') : null);
+
+        var status = xmlFile.getElementsByTagName('wps:Status')[0],
+            processStarted = status.getElementsByTagName('wps:ProcessStarted');
+
+        if (processStarted[0].hasAttribute('percentCompleted')) {
+          var percentCompleted = processStarted[0].getAttribute('percentCompleted');
+          ((sF.loader.initialized) ? sF.loader.updatePercents(sF.loader.mainBox,percentCompleted) : null);
+          ((sF.debbuging) ? console.log('Info: percent: ' + percentCompleted) : null);
+        }
+      },
+
+      processFailedResponse: function(xmlFile) {
+        ((sF.debbuging) ? console.log('Info: process error response, showing error info in modal window.') : null);
+        ((sF.loader.initialized) ? sF.loader.quickHide(sF.loader.mainBox) : null);
 
         var status = xmlFile.getElementsByTagName('wps:Status')[0],
             processFailed = status.getElementsByTagName('wps:ProcessFailed')[0],
@@ -1481,8 +1555,12 @@
         sF.modal.open('error');
       },
 
-      processFinalResponse: function() {
-        console.log('Processing final response.');
+      processSucceededResponse: function(xmlFile) {
+        sF.postman.finalXML = xmlFile;
+
+        ((sF.debbuging) ? console.log('Info: process final response, showing and processing data in new page area.') : null);
+        ((sF.loader.initialized) ? sF.loader.quickHide(sF.loader.mainBox) : null);
+
 
         var processOutputs = sF.postman.finalXML.getElementsByTagName('wps:ProcessOutputs')[0],
             outputs = processOutputs.getElementsByTagName('wps:Output'),
@@ -1535,70 +1613,46 @@
       },
 
       processResponse: function(xmlFile) {
+        var status = xmlFile.getElementsByTagName('wps:Status')[0],
+            processSucceeded = status.getElementsByTagName('wps:ProcessSucceeded'),
+            processAccepted = status.getElementsByTagName('wps:ProcessAccepted'),
+            processStarted = status.getElementsByTagName('wps:ProcessStarted'),
+            processFailed = status.getElementsByTagName('wps:ProcessFailed');
 
-        if (xmlFile) {
-          var status = xmlFile.getElementsByTagName('wps:Status')[0],
-              processSucceeded = status.getElementsByTagName('wps:ProcessSucceeded'),
-              processAccepted = status.getElementsByTagName('wps:ProcessAccepted'),
-              processStarted = status.getElementsByTagName('wps:ProcessStarted'),
-              processFailed = status.getElementsByTagName('wps:ProcessFailed');
-
-          if (processFailed.length > 0) {
-            ((sF.loader.initialized) ? sF.loader.quickHide(sF.loader.mainBox) : null);
-            sF.postman.processErrorResponse(xmlFile);
-          }
-          else if (processSucceeded.length > 0) {
-
-            ((sF.loader.initialized) ? sF.loader.updatePercents(sF.loader.mainBox,100) : null);
-            sF.postman.finalXML = xmlFile;
-
-            setTimeout(function() {
-              ((sF.loader.initialized) ? sF.loader.quickHide(sF.loader.mainBox) : null);
-            },1000);
-
-            setTimeout(function() {
-              sF.postman.processFinalResponse();
-            },1500);
-
-          } else {
-            if (processAccepted.length > 0) {
-              //console.log('processAccepted');
-
-              ((sF.loader.initialized) ? sF.loader.show(sF.loader.mainBox) : null);
-
-              var executeResponse = xmlFile.getElementsByTagName('wps:ExecuteResponse')[0];
-              if (executeResponse.hasAttribute('statusLocation')) {
-                sF.postman.statusLocation = executeResponse.getAttribute('statusLocation');
-
-                sF.postman.timeout = setTimeout(function () {
-                  sF.postman.send(false);
-                }, 2000);
-              }
-            } else if (processStarted.length > 0) {
-              //console.log('processStarted');
-
-              if (processStarted[0].hasAttribute('percentCompleted')) {
-                var percentCompleted = processStarted[0].getAttribute('percentCompleted');
-
-                ((sF.loader.initialized) ? sF.loader.updatePercents(sF.loader.mainBox,percentCompleted) : null);
-
-                //console.log('Percent: ' + percentCompleted);
-              }
-
-              sF.postman.timeout = setTimeout(function () {
-                sF.postman.send(false);
-              }, 2000);
-            }
-          }
-        } else {
-            if (sF.postman.statusLocation != null) {
-              sF.postman.timeout = setTimeout(function () {
-                sF.postman.send(false);
-              }, 1000);
-            } else {
-              window.alert('Chyba komunikace se serverem!');
-            }
+        if (processFailed.length > 0) {
+          sF.postman.processFailedResponse(xmlFile);
+          return true;
         }
+
+        if (processSucceeded.length > 0) {
+          sF.postman.processFinalStatusResponse();
+          setTimeout(function() {
+            sF.postman.processSucceededResponse(xmlFile);
+          },2000);
+          return true;
+        }
+
+        if (processAccepted.length > 0) {
+          sF.postman.processAcceptedResponse(xmlFile);
+
+          sF.postman.timeout = setTimeout(function () {
+            sF.postman.send(false);
+          }, sF.postman.delay);
+
+          return true;
+        }
+
+        if (processStarted.length > 0) {
+          sF.postman.processStartedResponse(xmlFile);
+
+          sF.postman.timeout = setTimeout(function () {
+            sF.postman.send(false);
+          }, sF.postman.delay);
+
+          return true;
+        }
+
+        console.log('Error: a condition has arisen that should not be.');
       },
 
       send: function(firstSending) {
@@ -1606,16 +1660,23 @@
             requestXmlString = null;
 
         if (firstSending) {
+          ((sF.debbuging) ? console.log('Info: first sending; creating request XML and sending it to server (communicating with endpoint). Showing loader.') : null);
+          ((sF.loader.initialized) ? sF.loader.show(sF.loader.mainBox) : null);
           url = sF.endpointUrl;
           requestXmlString = sF.postman.createRequestXMLString();
+          sF.postman.attempts = 0;
         } else {
+          ((sF.debbuging) ? console.log('Info: resending to the server (comunicating with status location). Attempt: ' + sF.postman.attempts) : null);
           url = sF.postman.statusLocation;
+          sF.postman.attempts ++;
         }
 
         var xhttp = new XMLHttpRequest();
         xhttp.onreadystatechange = function() {
           if ((xhttp.readyState == 4) && (xhttp.status == 200)) {
             sF.postman.processResponse(xhttp.responseXML);
+          } else {
+            sF.postman.processSystemFault();
           }
         };
         if (firstSending) {
@@ -1632,13 +1693,11 @@
         if (sF.postman.initialized === false) {
           sF.postman.button = document.getElementById('jsf-postman');
           if (sF.postman.button) {
-
             sF.postman.button.addEventListener('click', function() {
               sF.postman.send(true);
             });
 
             sF.postman.initialized = true;
-
           } else {
             console.log('Error: Postman button missing.');
           }
@@ -1665,18 +1724,20 @@
           sF.globalColumnTexts['surfaces'][i] = sF.dictionary.getValue(sF.globalColumnTexts['surfaces'][i]);
         }
 
-        var i = 0,
-        obj = null;
-        while (sF.globalData['measures'][i]) {
-          sF.globalData['measures'][i]['name'] = sF.dictionary.getValue(sF.globalData['measures'][i]['name']);
-          i++;
-        }
+      // TODO přejmenování opatřeních podle slovníku
+      //  var i = 0,
+      //  obj = null;
+      //  while (sF.measures[i]) {
+      //    sF.measures[i]['name'] = sF.dictionary.getValue(sF.measures[i]['name']);
+      //    i++;
+      //  }
 
-        var i = 0;
-        while (sF.globalData['surfaces'][i]) {
-          sF.globalData['surfaces'][i]['name'] = sF.dictionary.getValue(sF.globalData['surfaces'][i]['name']);
-          i++;
-        }
+      // TODO přejmenování povrchů podle slovníku
+      //  var i = 0;
+      //  while (sF.surfaces[i]) {
+      //    sF.surfaces[i]['name'] = sF.dictionary.getValue(sF.surfaces[i]['name']);
+      //    i++;
+      //  }
 
         sF.initAfterDictionaryLoaded();
       },
@@ -1713,6 +1774,97 @@
       }
     },
 
+    loadDataTables: {
+      surfacesCsv: 'Medium fine (FAO);MF;0.00000026389;0.00011619000;1.79250000000;9.20430000000;0.46220000000\n' +
+        'Medium(FAO);ME;0.00000138889;0.00030983900;1.73850000000;10.08410000000;0.56130000000\n' +
+        'Very fine (FAO);VF;0.00000166667;0.00012909900;1.66650000000;11.25710000000;0.63580000000\n' +
+        'Fine (FAO);FF;0.00000277778;0.00004745900;1.70250000000;10.67060000000;0.60280000000\n' +
+        'Coarse (FAO);CO;0.00000694444;0.00009745900;1.79250000000;9.20430000000;0.46220000000\n' +
+        'NonSoil;N;0.00000000000;0.00000000000;1.58470000000;7.98480000000;0.48890000000\n' +
+        'Jíl (N);J0;0.00000016600;0.00010328000;1.61850000000;12.03910000000;0.67170000000\n' +
+        'Jílovitá (N);JJ;0.00000016600;0.00010328000;1.66650000000;11.25710000000;0.63580000000\n' +
+        'Jílovitohlinitá (N);JH;0.00000025000;0.00011619000;1.70250000000;10.67060000000;0.60280000000\n' +
+        'Hlinitá půda (N);HH;0.00000166600;0.00012909900;1.73850000000;10.08410000000;0.56130000000\n' +
+        'Písčitohlinitá (Novák);PH;0.00000166600;0.00012909900;1.73850000000;10.08410000000;0.56130000000\n' +
+        'Hlinitopísčitá půda (N);HP;0.00000366600;0.00007745900;1.79250000000;9.20430000000;0.46220000000\n' +
+        'Písčitá (Novák);PP;0.00001666600;0.00019364900;1.81650000000;8.81330000000;0.36610000000\n' +
+        'Silt loam (USDA);SIL;0.00000013889;0.00010328000;1.73850000000;10.08410000000;0.56130000000\n' +
+        'Silt (USDA);SI;0.00000016667;0.00010328000;1.73850000000;10.08410000000;0.56130000000\n' +
+        'Silty clay loam )USDA);SICL;0.00000016667;0.00010328000;1.70250000000;10.67060000000;0.60280000000\n' +
+        'Loamy sand (USDA);LS;0.00000100000;0.00012909900;1.81650000000;8.81330000000;0.36610000000\n' +
+        'Sand (USDA);SS;0.00000100000;0.00012909900;1.81650000000;8.81330000000;0.36610000000\n' +
+        'Loam (USDA);LL;0.00000166667;0.00012909900;1.73850000000;10.08410000000;0.56130000000\n' +
+        'Clay loam (USDA);CL;0.00000194444;0.00004745900;1.70250000000;10.67060000000;0.60280000000\n' +
+        'Silty caly (USDA);SIC;0.00000194444;0.00004745900;1.66650000000;11.25710000000;0.63580000000\n' +
+        'Clay (USDA);CC;0.00000194444;0.00024528900;1.81650000000;8.81330000000;0.36610000000\n' +
+        'Sandy clay (USDA);SC;0.00000513889;0.00009745900;1.66650000000;11.25710000000;0.63580000000\n' +
+        'Sandy caly loam(USDA);SCL;0.00000513889;0.00009745900;1.70250000000;10.67060000000;0.60280000000\n' +
+        'Sandy loam (USDA);SL;0.00000513889;0.00009745900;1.79250000000;9.20430000000;0.46220000000',
+      measuresCsv: 'Textilie z mixu přírodních a rychle se rozpadájicích umělých vláken;TLtD;0.035;0.75;0.2;2;48;1.15\n' +
+        'Síť z mixu přírodních a rychle se rozpadájicích umělých vláken;NtD;0.035;0.75;0.2;2;72;1.44\n' +
+        'Textilie z mixu přírodních a rychle se rozpadájicích umělých vláken;TNaD;0.035;0.75;0.2;2;96;1.92\n' +
+        'Netkaná textilie;TNoD;0.035;0.05;0.25;2;96;1.92\n' +
+        'Pletená textilie;TPlD;0.035;0.05;0.25;2;108;2.16\n' +
+        '3D matrace v sendviči z umělých vláken;M3DD;0.035;0.05;0.25;2;108;2.20\n' +
+        'Rohož z kokosových nebo jutových vláken v kokosovém nebo jutovém sendviči;KokD;0.035;0.75;0.2;2;112;3.00\n' +
+        '3D matrace;M3DT;0.035;0.05;0.25;2;96;1.90\n' +
+        '3D matrace vyplněná drobný štěrkem spojeným asfaltem;MPaT;0.035;0.05;0.25;2;216;1.15\n' +
+        'geomříž plochá;MPeT;0.035;0.05;0.25;2;2520;1.63\n' +
+        '3D matrace;M3DT;0.035;0.05;0.25;2;240;3.00\n' +
+        'trvalá výztuž drnu;DrnT;0.035;0.05;0.25;2;480;3.20\n' +
+        'PP geobuňka v PP sendviči;SenT;0.035;0.05;0.25;2;191;3.80\n' +
+        '3D matrace spojená s výtužným prvkem;3DST;0.035;0.05;0.25;2;960;6.10\n' +
+        'geomříž s prostorově uspořádány příčnými vlákny (vlnami);GeoT;0.035;0.05;0.25;2;5760;3.74\n' +
+        'holá půda bez opatřebí;BAR;0.025;0;0;1;10.66;0.25\n' +
+        'plně zapojený travní porost - pravidelně sečený;GRA;0.03;0;0;0;28.7;1.80\n',
+      init: function() {
+        var allSurfacesTextLines = sF.loadDataTables.surfacesCsv.split('\n'),
+            surfacesEntries = null,
+            allMeasuresTextLines = sF.loadDataTables.measuresCsv.split('\n'),
+            measuresEntries = null,
+            newObj = {};
+
+        for (var i = 0; i < allSurfacesTextLines.length; i++) {
+          surfacesEntries = allSurfacesTextLines[i].split(';');
+
+          if (surfacesEntries.length == 7) {
+            newObj = {};
+            newObj.name = surfacesEntries[0];
+            newObj.code = surfacesEntries[1];
+            newObj.k = surfacesEntries[2];
+            newObj.s = surfacesEntries[3];
+            newObj.b = surfacesEntries[4];
+            newObj.x = surfacesEntries[5];
+            newObj.y = surfacesEntries[6];
+
+            sF.surfaces.push(newObj);
+          } else {
+            console.log('Error: an incomplete surface record was ignored.');
+          }
+        }
+
+        for (var i = 0; i < allMeasuresTextLines.length; i++) {
+          measuresEntries = allMeasuresTextLines[i].split(';');
+
+          if (measuresEntries.length == 8) {
+            newObj = {};
+            newObj.name = measuresEntries[0];
+            newObj.code = measuresEntries[1];
+            newObj.n = measuresEntries[2];
+            newObj.pi = measuresEntries[3];
+            newObj.ppl = measuresEntries[4];
+            newObj.ret = measuresEntries[5];
+            newObj.tau = measuresEntries[6];
+            newObj.v = measuresEntries[7];
+
+            sF.measures.push(newObj);
+          } else {
+            console.log('Error: an incomplete measure record was ignored (name: ' + measuresEntries[0] + ')');
+          }
+        }
+      }
+    },
+
     initAfterDictionaryLoaded: function() {
       if (sF.mode.init()) {
         sF.mode.showForm();
@@ -1738,6 +1890,7 @@
 
     init: function() {
       sF.loader.init();
+      sF.loadDataTables.init();
       sF.dictionary.init();
     }
   }

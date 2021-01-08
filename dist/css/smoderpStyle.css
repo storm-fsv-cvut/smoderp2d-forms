@@ -29,6 +29,17 @@
   color: lime;
   content: "\ea10"; }
 
+.sf-main-box.is--table-select {
+  width: 10vw;
+  min-width: 100px;
+  max-width: 150px;
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: pre;
+  text-overflow: ellipsis; }
+  .sf-main-box.is--table-select option {
+    border: solid 1px #DDDDDD; }
+
 .sf-main-box {
   position: relative; }
 
@@ -126,42 +137,70 @@
     font-weight: normal !important; }
 
 .sf-modal {
-  z-index: 999;
+  z-index: 900;
   display: none;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: center;
-  align-items: center;
-  align-content: center;
   position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
-  left: 0; }
-  .sf-modal.jsf-closed {
-    display: none; }
+  left: 0;
+  opacity: 0;
+  transition: opacity 500ms;
+  overflow-x: hidden;
+  overflow-y: visible; }
+  .sf-modal.jsf-opening {
+    display: block; }
   .sf-modal.jsf-open {
-    display: flex; }
+    display: block;
+    opacity: 1; }
+  .sf-modal.jsf-closed {
+    display: none;
+    opacity: 1; }
+  .sf-modal__palette, .sf-modal__content {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    align-content: center; }
+  .sf-modal__palette {
+    position: relative;
+    width: 100vw;
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 2rem 0 5rem 0; }
   .sf-modal__content {
+    position: relative;
+    z-index: 920;
+    box-sizing: border-box;
+    overflow: hidden; }
+  .sf-modal__box {
+    display: none;
     background-color: white;
     border-radius: .5rem;
-    padding: .6rem 1.2rem 3rem 1.2rem;
-    margin: .2rem 1rem; }
-  .sf-modal__box {
-    display: none; }
+    width: 80vw;
+    max-width: 1200px;
+    padding: .6rem 1.2rem 3rem 1.2rem; }
     .sf-modal__box.jsf-closed {
       display: none; }
     .sf-modal__box.jsf-open {
       display: block; }
   .sf-modal__shadow {
-    z-index: -1;
-    display: block;
     position: absolute;
+    z-index: 910;
     top: 0;
     right: 0;
-    bottom: 0;
     left: 0;
+    display: block;
+    height: 100%;
     background-color: rgba(0, 0, 0, 0.3); }
+
+.sf-table-box {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 1rem 0;
+  margin: 1rem 0; }
 
 .u-txt-center {
   text-align: center; }

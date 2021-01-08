@@ -1,34 +1,64 @@
+$modal-z-index: 900;
+
 .sf-modal {
-  z-index: 999;
+  z-index: $modal-z-index;
   display: none;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  justify-content: center;
-  align-items: center;
-  align-content: center;
   position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
   left: 0;
+  opacity: 0;
+  transition: opacity 500ms;
+  overflow-x: hidden;
+  overflow-y: visible;
 
-  &.jsf-closed {
-    display: none;
+  &.jsf-opening {
+    display: block;
   }
 
   &.jsf-open {
+    display: block;
+    opacity: 1;
+  }
+
+  &.jsf-closed {
+    display: none;
+    opacity: 1;
+  }
+
+  &__palette,
+  &__content {
     display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: center;
+    align-items: center;
+    align-content: center;
+  }
+
+  &__palette {
+    position: relative;
+    width: 100vw;
+    min-height: 100vh;
+    box-sizing: border-box;
+    padding: 2rem 0 5rem 0;
   }
 
   &__content {
-    background-color: white;
-    border-radius: .5rem;
-    padding: .6rem 1.2rem 3rem 1.2rem;
-    margin: .2rem 1rem;
+    position: relative;
+    z-index: $modal-z-index + 20;
+    box-sizing: border-box;
+    overflow: hidden;
   }
 
   &__box {
     display: none;
+    background-color: white;
+    border-radius: .5rem;
+    width: 80vw;
+    max-width: 1200px;
+    padding: .6rem 1.2rem 3rem 1.2rem;
 
     &.jsf-closed {
       display: none;
@@ -40,13 +70,13 @@
   }
 
   &__shadow {
-    z-index: -1;
-    display: block;
     position: absolute;
+    z-index: $modal-z-index + 10;
     top: 0;
     right: 0;
-    bottom: 0;
     left: 0;
+    display: block;
+    height: 100%;
     background-color: rgba(0,0,0,0.3);
   }
 }
