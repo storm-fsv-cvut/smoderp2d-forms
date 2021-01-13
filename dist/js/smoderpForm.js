@@ -6,6 +6,18 @@
     dictionaryUrl: null,
     dictionaryJSON: null,
     endpointUrl: 'https://rain1.fsv.cvut.cz:4444/services/wps/',//'http://rain1.fsv.cvut.cz:8080/services/wps/', //'http://geo102.fsv.cvut.cz:80/services/yfsgwps', //'http://geo102.fsv.cvut.cz/services/yfsgwps', //'response.xml', //'https://rain1.fsv.cvut.cz/services/wps',
+    defaultRes: 1,
+    defaultEndtime: 60,
+    defaultMaxdt: 1,
+    defaultslopeWidth: 1,
+    defaultResMin: 0.25,
+    defaultResMax: 5,
+    defaultEndtimeMin: 15,
+    defaultEndtimeMax: 1000,
+    defaultMaxdtMin: 1,
+    defaultMaxdtMax: 30,
+    defaultSlopeWidthMin: 1,
+    defaultSlopeWidthMax: 300,
     userRainFalls: [],
     fifteenRainFallValue: null,
     globalColumnTexts: {
@@ -447,6 +459,47 @@
           } else {
             console.log('Error: ' + code + ' table missing.');
           }
+        }
+      }
+    },
+
+    iniData: {
+      init: function() {
+        var resolutionInput = document.getElementById('resolution'),
+            simulationLengthInput = document.getElementById('simulation-length'),
+            maxdtInput = document.getElementById('maxdt'),
+            slopeWidthInput = document.getElementById('slope-width');
+
+        if (resolutionInput) {
+          resolutionInput.min = sF.defaultResMin;
+          resolutionInput.max = sF.defaultResMax;
+          resolutionInput.value = sF.defaultRes;
+        } else {
+          console.log('Warning: resolution input missing.');
+        }
+
+        if (simulationLengthInput) {
+          simulationLengthInput.min = sF.defaultEndtimeMin;
+          simulationLengthInput.max = sF.defaultEndtimeMax;
+          simulationLengthInput.value = sF.defaultEndtime;
+        } else {
+          console.log('Warning: simulation length input missing.');
+        }
+
+        if (maxdtInput) {
+          maxdtInput.min = sF.defaultMaxdtMin;
+          maxdtInput.max = sF.defaultMaxdtMax;
+          maxdtInput.value = sF.defaultMaxdt;
+        } else {
+          console.log('Warning: max dt input missing.');
+        }
+
+        if (slopeWidthInput) {
+          slopeWidthInput.min = sF.defaultSlopeWidthMin;
+          slopeWidthInput.max = sF.defaultSlopeWidthMax;
+          slopeWidthInput.value = sF.defaultslopeWidth;
+        } else {
+          console.log('Warning: slope width input missing.');
         }
       }
     },
@@ -1116,25 +1169,29 @@
 
           row = sF.outputs.hydrographCsvData.split('\n');
           for (var i = 1; i < row.length; i++) {
-            cell = row[i].split(',');
-            sF.outputs.hdgTime.push(cell[0]);
-            sF.outputs.hdgDeltaTime.push(cell[1]);
-            sF.outputs.hdgRain.push(cell[2]);
-            sF.outputs.hdgTotalWaterLevel.push(cell[3]);
-            sF.outputs.hdgSurfaceFlow.push(cell[4]);
-            sF.outputs.hdgSurfaceVolRunoff.push(cell[5]);
+            cell = row[i].split(';');
+            if (!isNaN(parseFloat(cell[0]))) {
+              sF.outputs.hdgTime.push(parseFloat(cell[0]).toFixed(0));
+              sF.outputs.hdgDeltaTime.push(parseFloat(cell[1]));
+              sF.outputs.hdgRain.push(parseFloat(cell[2]));
+              sF.outputs.hdgTotalWaterLevel.push(parseFloat(cell[3]));
+              sF.outputs.hdgSurfaceFlow.push(parseFloat(cell[4]));
+              sF.outputs.hdgSurfaceVolRunoff.push(parseFloat(cell[5]).toFixed(20));
+            }
           }
 
           row = sF.outputs.profileCsvData.split('\n');
           for (var i = 0; i < row.length; i++) {
             cell = row[i].split(',');
-            sF.outputs.prfLength.push(cell[0]);
-            sF.outputs.prfSoilveg.push(cell[1]);
-            sF.outputs.prfMaximalSrfFlow.push(cell[2]);
-            sF.outputs.prfTotalRunoff.push(cell[3]);
-            sF.outputs.prfMaxSrfRunoffVelocity.push(cell[4]);
-            sF.outputs.prfMaxTangentialStress.push(cell[5]);
-            sF.outputs.prfRillRunoff.push(cell[6]);
+            if (!isNaN(parseFloat(cell[0]))) {
+              sF.outputs.prfLength.push(parseFloat(cell[0]));
+              sF.outputs.prfSoilveg.push(cell[1]);
+              sF.outputs.prfMaximalSrfFlow.push(parseFloat(cell[2]));
+              sF.outputs.prfTotalRunoff.push(parseFloat(cell[3]));
+              sF.outputs.prfMaxSrfRunoffVelocity.push(parseFloat(cell[4]));
+              sF.outputs.prfMaxTangentialStress.push(parseFloat(cell[5]));
+              sF.outputs.prfRillRunoff.push(parseFloat(cell[6]));
+            }
           }
 
           return true;
@@ -1142,7 +1199,7 @@
         return false;
       },
 
-      createForms: function() {
+      createCharts: function() {
         if ((sF.outputs.accepted) && (typeof Chart != 'undefined') && (sF.charts.generateData())) {
 
           var ctx = document.getElementById('jsf-surfaceVolRunoff');
@@ -1239,7 +1296,7 @@
         chart.update();
       },
 
-      updateForms: function() {
+      updateCharts: function() {
         if ((sF.outputs.accepted) && (typeof Chart != 'undefined') && (sF.charts.generateData())) {
 
           sF.charts.removeAllData(sF.charts.hdrChartOne);
@@ -1379,6 +1436,39 @@
       attempts: 0,
       delay: 3000,
 
+      getIniData: function() {
+        var res = null,
+            slopeWidth = null,
+            maxdt = null,
+            endtime = null;
+
+        var resolutionInput = document.getElementById('resolution'),
+            simulationLengthInput = document.getElementById('simulation-length'),
+            maxdtInput = document.getElementById('maxdt'),
+            slopeWidthInput = document.getElementById('slope-width');
+
+        ((resolutionInput) ? res = parseFloat(resolutionInput.value) : res = sF.defaultRes);
+        ((simulationLengthInput) ? endtime = parseInt(simulationLengthInput.value) : endtime = sF.defaultEndtime);
+        ((maxdtInput) ? maxdt = parseInt(maxdtInput.value) : maxdt = sF.defaultMaxdt);
+        ((slopeWidthInput) ? slopeWidth = parseInt(slopeWidthInput.value) : slopeWidth = sF.defaultslopeWidth);
+
+        ((res < sF.defaultResMin) ? res = sF.defaultResMin : null);
+        ((res > sF.defaultResMax) ? res = sF.defaultResMax : null);
+        ((endtime < sF.defaultEndtimeMin) ? endtime = sF.defaultEndtimeMin : null);
+        ((endtime > sF.defaultEndtimeMax) ? endtime = sF.defaultEndtimeMax : null);
+        ((maxdt < sF.defaultMaxdtMin) ? maxdt = sF.defaultMaxdtMin : null);
+        ((maxdt > sF.defaultMaxdtMax) ? maxdt = sF.defaultMaxdtMax : null);
+        ((slopeWidth < sF.defaultSlopeWidthMin) ? slopeWidth = sF.defaultSlopeWidthMin : null);
+        ((slopeWidth > sF.defaultSlopeWidthMax) ? slopeWidth = sF.defaultSlopeWidthMax : null);
+
+        return {
+          'res': res,
+          'slopeWidth': slopeWidth,
+          'maxdt': maxdt,
+          'endtime': endtime
+        }
+      },
+
       getSelectionsData: function() {
         var str = '',
             retString = '',
@@ -1388,7 +1478,7 @@
             actualSurfacesInput = null,
             actualProjectionValue = null,
             actualHeightValue = null,
-            actualRatioNumber = 0,
+            //actualRatioNumber = 0,
             actualMeasuresValue = null,
             actualSurfacesValue = null;
 
@@ -1403,11 +1493,15 @@
           actualMeasuresValue = actualMeasuresInput.value;
           actualSurfacesValue = actualSurfacesInput.value;
 
-          actualRatioNumber = actualHeightValue / actualProjectionValue;
+          //actualRatioNumber = actualHeightValue / actualProjectionValue;
+          //if (!isNaN(actualRatioNumber)) {
+          //  actualRatioNumber = actualRatioNumber.toFixed(sF.placesInXml);
+          //  str = actualProjectionValue + ';' + actualHeightValue + ';' + actualMeasuresValue + ';' + actualSurfacesValue + ';' + actualRatioNumber + '\n';
+          //  retString += str;
+          //}
 
-          if (!isNaN(actualRatioNumber)) {
-            actualRatioNumber = actualRatioNumber.toFixed(sF.placesInXml);
-            str = actualProjectionValue + ';' + actualHeightValue + ';' + actualMeasuresValue + ';' + actualSurfacesValue + ';' + actualRatioNumber + '\n';
+          if ((actualProjectionValue > 0) && (actualHeightValue>0) && (actualMeasuresValue != 'needSelect') && (actualSurfacesValue != 'needSelect')) {
+            str = actualProjectionValue + ';' + actualHeightValue + ';' + actualMeasuresValue + ';' + actualSurfacesValue + '\n';
             retString += str;
           }
         }
@@ -1443,6 +1537,7 @@
 
       createRequestXMLString: function() {
         var selectionsData = sF.postman.getSelectionsData();
+        var iniData = sF.postman.getIniData();
         var soilTypes = sF.postman.getSoilTypes();
         var text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
           '\t<wps:Execute service="WPS" version="1.0.0" xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">\n' +
@@ -1451,7 +1546,7 @@
               '\t\t\t<wps:Input>\n' +
                 '\t\t\t\t<ows:Identifier>input</ows:Identifier>\n' +
                 '\t\t\t\t<wps:Data>\n' +
-                  '\t\t\t\t\t<wps:ComplexData mimeType="text/csv"><![CDATA[vodorovny prumet stahu[m];prevyseni[m];povrch;puda;sklon\n' +
+                  '\t\t\t\t\t<wps:ComplexData mimeType="text/csv"><![CDATA[horizontal projection [m];vertical distance [m];surface protection;soil type\n' +
                   selectionsData + ']]></wps:ComplexData>\n' +
                 '\t\t\t\t</wps:Data>\n' +
               '\t\t\t</wps:Input>\n' +
@@ -1472,10 +1567,11 @@
                 '\t\t\t\t<ows:Identifier>config</ows:Identifier>\n' +
                 '\t\t\t\t<wps:Data>\n' +
                   '\t\t\t\t\t<wps:ComplexData mimeType="text/plain"><![CDATA[[domain]\n'+
-                    '\t\t\t\t\t\tres: 1\n' +
+                    '\t\t\t\t\t\tres: ' + iniData.res + '\n' +
+                    '\t\t\t\t\t\tslope_width: ' + iniData.slopeWidth + '\n' +
                     '\t\t\t\t\t\t[time]\n' +
-                    '\t\t\t\t\t\tmaxdt: 30\n' +
-                    '\t\t\t\t\t\tendtime: 60\n' +
+                    '\t\t\t\t\t\tmaxdt: ' + iniData.maxdt + '\n' +
+                    '\t\t\t\t\t\tendtime: ' + iniData.endtime + '\n' +
                 '\t\t\t\t\t]]></wps:ComplexData>\n' +
                 '\t\t\t\t</wps:Data>\n' +
               '\t\t\t</wps:Input>\n' +
@@ -1592,9 +1688,9 @@
         if ((sF.outputs.profileCsvData) && (sF.outputs.hydrographCsvData)) {
           if (sF.outputs.accepted === false) {
             sF.outputs.accepted = true;
-            sF.charts.createForms();
+            sF.charts.createCharts();
           } else {
-            sF.charts.updateForms();
+            sF.charts.updateCharts();
           }
 
           // creating data anchors
@@ -1608,6 +1704,13 @@
           if (hydrographAnchor) {
             var hydrographUri = 'data:text/csv;charset=UTF-8,' + encodeURIComponent(sF.outputs.hydrographCsvData);
             hydrographAnchor.href = hydrographUri;
+          }
+
+          var wholeXmlAnchor = document.getElementById('jsf-xml-achor');
+          if (wholeXmlAnchor) {
+            var xmlText = new XMLSerializer().serializeToString(sF.postman.finalXML),
+                wholeXmlUri = 'data:text/plain,' + encodeURIComponent(xmlText);
+            wholeXmlAnchor.href = wholeXmlUri;
           }
         }
       },
@@ -1675,8 +1778,6 @@
         xhttp.onreadystatechange = function() {
           if ((xhttp.readyState == 4) && (xhttp.status == 200)) {
             sF.postman.processResponse(xhttp.responseXML);
-          } else {
-            sF.postman.processSystemFault();
           }
         };
         if (firstSending) {
@@ -1892,6 +1993,7 @@
       sF.loader.init();
       sF.loadDataTables.init();
       sF.dictionary.init();
+      sF.iniData.init();
     }
   }
 

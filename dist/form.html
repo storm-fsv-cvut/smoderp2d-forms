@@ -17,23 +17,23 @@
     <div class="sf-main-box" id="jsf-mainbox">
       <h2>Obecná data</h2>
 
-      <label for="rozliseni">Rozlišení:</label>
-      <input type="number" name="rozliseni" id="rozliseni" value="1" />
+      <label for="resolution">Rozlišení:</label>
+      <input type="number" name="resolution" id="resolution" step="0.01" />
       m
       <br />
 
-      <label for="delka_simulace">Délka simnulace:</label>
-      <input type="number" name="delka_simulace" id="delka_simulace" value="15" />
+      <label for="simulation-length">Délka simnulace:</label>
+      <input type="number" name="simulation-length" id="simulation-length" step="1" />
       min
       <br />
 
-      <label for="maximalni_dt">Maximální dt:</label>
-      <input type="number" name="maximalni_dt" id="maximalni_dt" value="1" />
+      <label for="maxdt">Maximální dt:</label>
+      <input type="number" name="maxdt" id="maxdt" step="1" />
       s
       <br />
 
-      <label for="sirka_svahu">Šířka svahu:</label>
-      <input type="number" name="sirka_svahu" id="sirka_svahu" value="" />
+      <label for="slope-width">Šířka svahu:</label>
+      <input type="number" name="slope-width" id="slope-width" step="1" />
       m
       <br />
 
@@ -142,6 +142,7 @@
       <ul>
         <li><a id="jsf-profile-achor" download="profile.csv" target="_blank">Stáhnout Profile CSV</a></li>
         <li><a id="jsf-hydrograph-achor" download="hydrograph.csv" target="_blank">Stáhnout Hydrograph CSV</a></li>
+        <li><a id="jsf-xml-achor" download="response.xml" target="_blank">Stáhnout celé xml odpovědi</a></li>
       </ul>
 
       <div style="width: 1200px; max-height: 800px">
