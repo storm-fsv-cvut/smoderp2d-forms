@@ -10,7 +10,7 @@
     defaultEndtime: 60,
     defaultMaxdt: 1,
     defaultslopeWidth: 1,
-    defaultResMin: 0.25,
+    defaultResMin: 0.3,
     defaultResMax: 5,
     defaultEndtimeMin: 15,
     defaultEndtimeMax: 1000,
@@ -18,6 +18,7 @@
     defaultMaxdtMax: 30,
     defaultSlopeWidthMin: 1,
     defaultSlopeWidthMax: 300,
+    defaultProjectionMax: 100,
     userRainFalls: [],
     fifteenRainFallValue: null,
     lastUsedSelect: null,
@@ -478,6 +479,7 @@
 
           resolutionInput.addEventListener('change', function() {
             sF.section.validateAllRows();
+            sF.section.setAllMinValues();
           });
         } else {
           console.log('Warning: resolution input missing.');
@@ -629,6 +631,22 @@
         }
       },
 
+      setAllMinValues: function() {
+        var newMinValues = document.getElementById('resolution').value,
+            allProjectionInputs = document.getElementsByClassName('is--projection');
+        if (newMinValues) {
+          for (var i = 0; i < allProjectionInputs.length; i++) {
+            if ((allProjectionInputs[i].tagName == 'INPUT') || (allProjectionInputs[i].tagName == 'input')) {
+              allProjectionInputs[i].min = newMinValues;
+              if ((allProjectionInputs[i].value) && (!isNaN(allProjectionInputs[i].value)) && (allProjectionInputs[i].value < newMinValues)) {
+                allProjectionInputs[i].value = newMinValues;
+                sF.section.calculate(allProjectionInputs[i]);
+              }
+            }
+          }
+        }
+      },
+
       calculate: function(input) {
         var type = input.getAttribute('data-type'),
             order = input.getAttribute('data-order'),
@@ -691,43 +709,48 @@
 
         input.setAttribute('class', 'sf-main-box is--table-input is--' + name);
 
-        if ((name === 'projection') || (name === 'height')) {
-          input.setAttribute('step', '0.1');
-          input.setAttribute('type', 'number');
-          input.setAttribute('min', '0');
-          input.setAttribute('value', '0');
-          input.setAttribute('size', '4');
-          input.setAttribute('maxlength', '4');
-          eventName = 'input';
-        } else if (name === 'ratio') {
-          input.setAttribute('type', 'text');
-          input.setAttribute('value', '0');
-          input.setAttribute('size', '6');
-          eventName = 'change';
+        switch (name) {
+          case 'projection':
+            input.setAttribute('type', 'number');
+            input.setAttribute('min', sF.defaultRes);
+            input.setAttribute('max', sF.defaultProjectionMax);
+            input.setAttribute('step', '0.1');
+            input.setAttribute('size', '4');
+            input.setAttribute('maxlength', '4');
+            eventName = 'input';
+            break;
+          case 'height':
+            input.setAttribute('type', 'number');
+            input.setAttribute('min', '0.1');
+            input.setAttribute('max', sF.defaultProjectionMax);
+            input.setAttribute('step', '0.1');
+            input.setAttribute('size', '4');
+            input.setAttribute('maxlength', '4');
+            eventName = 'input';
+            break;
+          case 'ratio':
+            input.setAttribute('type', 'text');
+            input.setAttribute('value', '');
+            input.setAttribute('size', '6');
+            eventName = 'change';
+            break;
         }
 
-        //input.setAttribute('size', 8);
         input.setAttribute('name', inputName);
         input.setAttribute('data-type', name);
         input.setAttribute('data-order', sF.section.counter);
 
         input.addEventListener(eventName, function(e) {
-          var input = e.target,
-              inputType = input.getAttribute('data-type');
+          var input = e.target;
           sF.section.calculate(input);
         });
 
         if ((name === 'height') || (name === 'projection')) {
           input.addEventListener('change', function(e) {
             var input = e.target;
-            var val = Math.ceil(input.value * 10) / 10;
-
-            if (val > 0) {
-              input.value = val;
-            } else {
-              input.value = 0.1;
-            }
-
+            ((parseFloat(input.value) < parseFloat(input.min)) ? input.value = input.min : null);
+            ((parseFloat(input.value) > parseFloat(input.max)) ? input.value = input.max : null);
+            console.log('input.max: ' + parseFloat(input.max));
             sF.section.calculate(input);
           });
         }
