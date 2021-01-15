@@ -1,0 +1,13 @@
+.sf {
+  &.is--shown {
+    display: block;
+  }
+  &.is--hidden {
+    display: none;
+  }
+  &.is--inline {
+    &.is--shown {
+      display: inline-block;
+    }
+  }
+}

@@ -41,48 +41,51 @@
 
       <h2>Srážka</h2>
 
-      <div class="sf-table-box"><table class="sf-table">
-        <tr class="sf-table-row is--not-highlighted"><td>
-          <select id="jsf-rainfall-select" name="rainfall-type">
-            <option value="none" selected="true" disabled="true">Vyberte možnost</option>
-            <option value="user">Uživatelská srážka</option>
-            <option value="fifteen">Maximální 15ti minutový déšt</option>
-            <option value="position" disabled="1">Výběr srážky podle polohy</option>
-          </select>
-        </td><td>
-          <div id="jsf-rainfall-setup" class="sf-button jsf-disabled">Nastavit</div>
-        </td></tr>
-      </table></div>
+      <div class="sf-table-box">
+        <table class="sf-table">
+          <tr class="sf-table-row is--not-highlighted"><td>
+            <select id="jsf-rainfall-select" name="rainfall-type">
+              <option value="none" selected="true" disabled="true">Vyberte možnost</option>
+              <option value="user">Uživatelská srážka</option>
+              <option value="fifteen">Maximální 15ti minutový déšt</option>
+              <option value="position" disabled="1">Výběr srážky podle polohy</option>
+            </select>
+          </td><td>
+            <div id="jsf-rainfall-setup" class="sf-button jsf-disabled">Nastavit</div>
+          </td></tr>
+        </table>
+      </div>
 
       <h2>Svah</h2>
 
-      <div class="sf-table-box"><table id="jsf-main-table" class="sf-table">
-        <tr>
-          <th>Číslo úseku</th>
-          <th>Průmět [m]</th>
-          <th>Výška [m]</th>
-          <th>Poměr</th>
-          <th>Ochranné opratření</th>
-          <th>Půda</th>
-          <th></th>
-        </tr>
-      </table></div>
+      <div class="sf-table-box">
+        <table id="jsf-main-table" class="sf-table">
+          <tr>
+            <th>Číslo úseku</th>
+            <th>Průmět [m]</th>
+            <th>Výška [m]</th>
+            <th>Poměr</th>
+            <th>Ochranné opratření</th>
+            <th>Půda</th>
+            <th></th>
+          </tr>
+        </table>
+      </div>
 
-      <br />
 
-      <div id="jsf-section-add" class="sf-button">Přidat řádek</div>
+      <p><span id="jsf-section-add" class="sf-button">Přidat řádek</span></p>
 
-      <br /><br /><hr /> <!-- -------------------------------- ODESLÁNÍ FORMUÁŘE ---------------------------------------- -->
+      <br /><hr /> <!-- -------------------------------- ODESLÁNÍ FORMUÁŘE ---------------------------------------- -->
 
       <h2>Captcha</h2>
       Nějaká CAPTCHA
 
-      <br /><br /><hr /><br /> <!-- -------------------------------- ODESLÁNÍ FORMUÁŘE ---------------------------------------- -->
+      <br /><br /><hr /> <!-- -------------------------------- ODESLÁNÍ FORMUÁŘE ---------------------------------------- -->
 
 
-      <div id="jsf-postman" class="sf-button">Spočítej</div>
+      <p><span id="jsf-postman" class="sf-button">Spočítej<span></p>
 
-      <div class="sf is--inline is--hidden sf-button jsf-to-result-handler">Zpět na poslední výsledky</div>
+      <p><span class="sf is--inline is--hidden sf-button jsf-to-result-handler">Zpět na poslední výsledky</span></p>
 
     </div>
 
@@ -92,7 +95,10 @@
           <div id="jsf-measures" class="sf-modal__box jsf-box">
             <h2>Přidat vlastní ochranné opatření</h2>
 
-            <div class="sf-table-box"><table id="jsf-measures-table" class="sf-table"></table></div>
+            <div class="sf-table-box">
+              <table id="jsf-measures-table" class="sf-table">
+              </table>
+            </div>
 
             <div id="jsf-measures-add" class="sf-button">Přidat</div>
 
@@ -100,7 +106,10 @@
           <div id="jsf-surfaces" class="sf-modal__box jsf-box">
             <h2>Přidej vlastní půdu</h2>
 
-            <div class="sf-table-box"><table id="jsf-surfaces-table" class="sf-table"></table></div>
+            <div class="sf-table-box">
+              <table id="jsf-surfaces-table" class="sf-table">
+              </table>
+            </div>
 
             <div id="jsf-surfaces-add" class="sf-button">Přidat</div>
 
@@ -108,7 +117,11 @@
           <div id="jsf-rainfall-user" class="sf-modal__box jsf-box">
             <h2>Uživatelská srážka</h2>
 
-            <div class="sf-table-box"><table id="jsf-rainfall-user-table" class="sf-table"></table></div>
+            <div class="sf-table-box">
+              <table id="jsf-rainfall-user-table" class="sf-table">
+              </table>
+            </div>
+
             <div id="jsf-rainfall-row-add" class="sf-button">Přidat</div>
             <div id="jsf-rainfall-restart" class="sf-button">Vše smazat</div>
             <div id="jsf-rainfall-user-add" class="sf-button">OK</div>
@@ -116,12 +129,14 @@
           <div id="jsf-rainfall-fifteen" class="sf-modal__box jsf-box">
             <h2>15ti minutový déšť</h2>
 
-            <div class="sf-table-box"><table id="jsf-rainfall-fifteen-table" class="sf-table">
-              <tr>
-                <td>Maximální intenzita 15ti minutového deště:</td>
-                <td><input id="jsf-fifteen-input"></input></td>
-              </tr>
-            </table></div>
+            <div class="sf-table-box">
+              <table id="jsf-rainfall-fifteen-table" class="sf-table">
+                <tr>
+                  <td>Maximální intenzita 15ti minutového deště:</td>
+                  <td><input id="jsf-fifteen-input"></input></td>
+                </tr>
+              </table>
+            </div>
 
             <div id="jsf-rainfall-fifteen-add" class="sf-button">OK</div>
           </div>
@@ -136,7 +151,7 @@
     </div>
 
     <div class="sf" id="jsf-resultbox">
-      <div class="sf is--inline sf-button jsf-to-form-handler">Zpět na formulář</div>
+      <p><span class="sf is--inline sf-button jsf-to-form-handler">Zpět na formulář</span></p>
       <br />
 
       <ul>

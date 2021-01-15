@@ -477,7 +477,13 @@
           resolutionInput.max = sF.defaultResMax;
           resolutionInput.value = sF.defaultRes;
 
-          resolutionInput.addEventListener('change', function() {
+          resolutionInput.addEventListener('change', function(e) {
+            var input = e.target,
+                value = parseFloat(input.value);
+
+            ((value < parseFloat(input.min)) ? input.value = input.min : null);
+            ((value > parseFloat(input.max)) ? input.value = input.max : null);
+
             sF.section.validateAllRows();
             sF.section.setAllMinValues();
           });
@@ -750,7 +756,6 @@
             var input = e.target;
             ((parseFloat(input.value) < parseFloat(input.min)) ? input.value = input.min : null);
             ((parseFloat(input.value) > parseFloat(input.max)) ? input.value = input.max : null);
-            console.log('input.max: ' + parseFloat(input.max));
             sF.section.calculate(input);
           });
         }
