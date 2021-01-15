@@ -20,6 +20,7 @@
     defaultSlopeWidthMax: 300,
     userRainFalls: [],
     fifteenRainFallValue: null,
+    lastUsedSelect: null,
     globalColumnTexts: {
       'measures': ['ms_name','ms_code','ms_roughness','ms_captured','ms_ratio','ms_retention','ms_tangential', 'ms_maxspeed'],
       'surfaces': ['srf_name','srf_code','k','s','b','x','y']
@@ -256,7 +257,7 @@
           body.style.overflow = 'auto';
         }
         if (mode) {
-          sF.section.lastSelectToFirstOption();
+          sF.lastSelectToFirstOption();
         }
         sF.modal.opened = false;
       },
@@ -474,6 +475,10 @@
           resolutionInput.min = sF.defaultResMin;
           resolutionInput.max = sF.defaultResMax;
           resolutionInput.value = sF.defaultRes;
+
+          resolutionInput.addEventListener('change', function() {
+            sF.section.validateAllRows();
+          });
         } else {
           console.log('Warning: resolution input missing.');
         }
@@ -500,6 +505,24 @@
           slopeWidthInput.value = sF.defaultslopeWidth;
         } else {
           console.log('Warning: slope width input missing.');
+        }
+      }
+    },
+
+    lastSelectToFirstOption: function() {
+      if (sF.lastUsedSelect) {
+        if ((sF.lastUsedSelect.nodeName === 'select') || (sF.lastUsedSelect.nodeName === 'SELECT')) {
+          if (sF.lastUsedSelect.name == 'rainfall-type') {
+            sF.lastUsedSelect.value = sF.lastUsedSelect.getElementsByTagName('OPTION')[0].value;
+            sF.rainfall.setSetupButton(false);
+          } else {
+            var options = sF.lastUsedSelect.getElementsByTagName('OPTION'),
+                order = null;
+
+            ((sF.lastUsedSelect.hasAttribute('data-order')) ? order = sF.lastUsedSelect.getAttribute('data-order') : order = 0);
+            sF.lastUsedSelect.value = options[0].value;
+            sF.section.isValid(order);
+          }
         }
       }
     },
@@ -531,56 +554,78 @@
         return null;
       },
 
-      lastSelectToFirstOption: function() {
-        if (sF.section.lastSelect) {
-          if ((sF.section.lastSelect.nodeName === 'select') || (sF.section.lastSelect.nodeName === 'SELECT')) {
-            var options = sF.section.lastSelect.getElementsByTagName('OPTION'),
-                order = null;
-
-            ((sF.section.lastSelect.hasAttribute('data-order')) ? order = sF.section.lastSelect.getAttribute('data-order') : order = 0);
-            sF.section.lastSelect.value = options[0].value;
-            sF.section.isValid(order);
-          }
-        }
-        // TODO not good solution
-        if (sF.section.lastSelect == sF.rainfall.mainSelect) {
-          sF.rainfall.setSetupButton(false);
-        }
-      },
-
       isValid: function(order) {
         var table = sF.section.mainTable,
             rows = table.getElementsByTagName('TR'),
+            examinedRow = rows[order],
             dataType = null,
-            error = false;
+            discrepancyFound = false;
 
-        if (rows[order]) {
-          var inputs = rows[order].getElementsByTagName('input'),
-              selects = rows[order].getElementsByTagName('select');
+        if (examinedRow) {
+          var inputs = examinedRow.getElementsByTagName('input'),
+              selects = examinedRow.getElementsByTagName('select'),
+              resolutionInput = document.getElementById('resolution'),
+              actualRes = null,
+              projectionValue = null,
+              heightValue = null;
+
+          ((resolutionInput) ? actualRes = parseFloat(resolutionInput.value) : actualRes = sF.defaultRes);
+          ((!actualRes) ? actualRes = sF.defaultRes : null);
 
           for (var i = 0; i < inputs.length; i++) {
             ((inputs[i].hasAttribute('data-type')) ? dataType = inputs[i].getAttribute('data-type') : dataType = null);
 
-            if ((dataType == 'projection') || (dataType == 'height')) {
-              (((isNaN(inputs[i].value)) || (inputs[i].value == 0) || (inputs[i].value < 0)) ? error = true : null);
-            } else if (dataType == 'ratio') {
-              (((inputs[i].value == 0) || (inputs[i].value == '')) ? error = true : null);
+            switch (dataType) {
+              case 'projection':
+                 if (isNaN(inputs[i].value)) {
+                   discrepancyFound = true;
+                 } else {
+                    projectionValue = inputs[i].value;
+                    ((inputs[i].value < actualRes) ? discrepancyFound = true : null);
+                    ((inputs[i].value > 100) ? discrepancyFound = true : null);
+                  }
+                break;
+              case 'height':
+                if (isNaN(inputs[i].value)) {
+                  discrepancyFound = true;
+                } else {
+                  heightValue = inputs[i].value;
+                  ((inputs[i].value <= 0) ? discrepancyFound = true : null);
+                  ((inputs[i].value > 100) ? discrepancyFound = true : null);
+                }
+                break;
+              case 'ratio':
+                ((inputs[i].value == 0) ? discrepancyFound = true : null);
+                ((inputs[i].value == '') ? discrepancyFound = true : null);
+                break;
             }
           }
 
           for (var i = 0; i < selects.length; i++) {
             ((selects[i].hasAttribute('data-type')) ? dataType = selects[i].getAttribute('data-type') : dataType = null);
-
             if ((dataType == 'measures') || (dataType == 'surfaces')) {
-              (((selects[i].value == 'needSelect') || (selects[i].value == 'addNew')) ? error = true : null);
+              (((selects[i].value == 'needSelect') || (selects[i].value == 'addNew')) ? discrepancyFound = true : null);
             }
+          }
+
+          if (!discrepancyFound) {
+            (((projectionValue / heightValue) < 1) ? discrepancyFound = true : null);
           }
         }
 
-        if (error) {
-          sF.markRow(sF.section.mainTable,order,'invalid');
+        if (discrepancyFound) {
+          sF.markRow(table,order,'invalid');
         } else {
-          sF.markRow(sF.section.mainTable,order,'valid');
+          sF.markRow(table,order,'valid');
+        }
+      },
+
+      validateAllRows: function() {
+        var table = sF.section.mainTable,
+            rows = table.getElementsByTagName('TR');
+
+        for (var i = 1; i < rows.length; i++) { // ignore header row!
+          sF.section.isValid(i);
         }
       },
 
@@ -600,12 +645,10 @@
               if (heightValue > 0) {
                 var newValue = projectionValue / heightValue;
                 ratioInput.value = '1:' + sF.round(newValue,sF.places);
-                //sF.markRow(sF.section.mainTable,order,'valid');
                 sF.section.isValid(order);
               } else if (sF.section.isRatioValueCorrect(ratioValue)) {
                 var newValue = projectionValue / sF.section.getRatioValue(ratioValue);
                 heightInput.value = sF.round(newValue,sF.places);
-                //sF.markRow(sF.section.mainTable,order,'valid');
                 sF.section.isValid(order);
               }
               break;
@@ -613,12 +656,10 @@
               if (projectionValue > 0) {
                 var newValue = projectionValue / heightValue;
                 ratioInput.value = '1:' + sF.round(newValue,sF.places);
-                //sF.markRow(sF.section.mainTable,order,'valid');
                 sF.section.isValid(order);
               } else if (sF.section.isRatioValueCorrect(ratioValue)) {
                 var newValue = heightValue * sF.section.getRatioValue(ratioValue);
                 projectionInput.value = sF.round(newValue,sF.places);
-                //sF.markRow(sF.section.mainTable,order,'valid');
                 sF.section.isValid(order);
               }
               break;
@@ -627,21 +668,18 @@
                 if (projectionValue > 0) {
                   var newValue = projectionValue / sF.section.getRatioValue(ratioValue);
                   heightInput.value = newValue;
-                  sF.markRow(sF.section.mainTable,order,'valid');
+                  sF.section.isValid(order);
                 } else if (heightValue > 0) {
                   var newValue = heightValue * sF.section.getRatioValue(ratioValue);
                   projectionInput.value = newValue;
-                  //sF.markRow(sF.section.mainTable,order,'valid');
                   sF.section.isValid(order);
                 }
               } else {
-                //sF.markRow(sF.section.mainTable,order,'invalid');
                 sF.section.isValid(order);
               }
               break;
           }
         } else {
-          //sF.markRow(sF.section.mainTable,order,'invalid');
           sF.section.isValid(order);
         }
       },
@@ -719,7 +757,7 @@
           }
         }
 
-        sF.section.lastSelect.value = code;
+        sF.lastUsedSelect.value = code;
       },
 
       addSelect: function(cell, code) {
@@ -762,7 +800,7 @@
           var select = e.target;
           if (select.value === 'addNew') {
             if (sF.modal.initialized) {
-              sF.section.lastSelect = e.target;
+              sF.lastUsedSelect = e.target;
               sF.modal.open(select.getAttribute('data-type'));
             } else {
               console.log('Error: can\'t open modal window.');
@@ -1027,7 +1065,7 @@
 
                     sF.rainfall.mainSelect.addEventListener('change', function(e) {
                       var select = e.target;
-                      sF.section.lastSelect = e.target;
+                      sF.lastUsedSelect = e.target;
 
                       if (sF.modal.initialized) {
                         switch (select.value) {
@@ -1546,14 +1584,14 @@
               '\t\t\t<wps:Input>\n' +
                 '\t\t\t\t<ows:Identifier>input</ows:Identifier>\n' +
                 '\t\t\t\t<wps:Data>\n' +
-                  '\t\t\t\t\t<wps:ComplexData mimeType="text/csv"><![CDATA[horizontal projection [m];vertical distance [m];surface protection;soil type\n' +
+                  '\t\t\t\t\t<wps:ComplexData mimeType="text/csv"><![CDATA[horizontalProjection[m];verticalDistance[m];surfaceProtection;soilType\n' +
                   selectionsData + ']]></wps:ComplexData>\n' +
                 '\t\t\t\t</wps:Data>\n' +
               '\t\t\t</wps:Input>\n' +
               '\t\t\t<wps:Input>\n' +
                 '\t\t\t\t<ows:Identifier>soil_types</ows:Identifier>\n' +
                 '\t\t\t\t<wps:Data>\n' +
-                  '\t\t\t\t\t<wps:ComplexData mimeType="text/csv"><![CDATA[soilveg;k;s;n;pi;ppl;ret;b;x;y;tau;v\n' +
+                  '\t\t\t\t\t<wps:ComplexData mimeType="text/csv"><![CDATA[soilVeg;k;s;n;pi;ppl;ret;b;x;y;tau;v\n' +
                   soilTypes + ']]></wps:ComplexData>\n' +
                 '\t\t\t\t</wps:Data>\n' +
               '\t\t\t</wps:Input>\n' +
