@@ -43,6 +43,9 @@
 .sf-main-box {
   position: relative; }
 
+.sf-chartbox {
+  width: 100%; }
+
 .sf-loader {
   position: absolute;
   top: 0;
