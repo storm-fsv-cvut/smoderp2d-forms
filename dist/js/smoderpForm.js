@@ -137,13 +137,13 @@
       resultBox: null,
 
       showEl: function(el) {
-        el.style.display = 'block';
-        el.style.visibility = 'visible';
+        sF.removeClass(el, 'is--hidden');
+        sF.addClass(el, 'is--shown');
       },
 
       hideEl: function(el) {
-        el.style.display = 'none';
-        el.style.visibility = 'hidden';
+        sF.removeClass(el, 'is--shown');
+        sF.addClass(el, 'is--hidden');
       },
 
       showForm: function() {

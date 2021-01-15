@@ -14,7 +14,7 @@
 
   <body>
 
-    <div class="sf-main-box" id="jsf-mainbox">
+    <div class="sf sf-main-box" id="jsf-mainbox">
       <h2>Obecná data</h2>
 
       <label for="resolution">Rozlišení:</label>
@@ -82,7 +82,7 @@
 
       <div id="jsf-postman" class="sf-button">Spočítej</div>
 
-      <p><span class="jsf-to-result-handler" style="display: none; visibility: hidden;">Zpět na poslední výsledky</span></p>
+      <div class="sf is--inline is--hidden sf-button jsf-to-result-handler">Zpět na poslední výsledky</div>
 
     </div>
 
@@ -135,8 +135,8 @@
       </div>
     </div>
 
-    <div id="jsf-resultbox">
-      <p><span class="jsf-to-form-handler">Zpět na formulář</span></p>
+    <div class="sf" id="jsf-resultbox">
+      <div class="sf is--inline sf-button jsf-to-form-handler">Zpět na formulář</div>
       <br />
 
       <ul>

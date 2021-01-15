@@ -40,6 +40,13 @@
   .sf-main-box.is--table-select option {
     border: solid 1px #DDDDDD; }
 
+.sf.is--shown {
+  display: block; }
+.sf.is--hidden {
+  display: none; }
+.sf.is--inline.is--shown {
+  display: inline-block; }
+
 .sf-main-box {
   position: relative; }
 
