@@ -30,6 +30,19 @@
       'measures': ['name','code','n','pi','ppl','ret','tau','v'],
       'surfaces': ['name','code','k','s','b','x','y']
     },
+    nDecPlc: {
+      'k': 12,
+      's': 12,
+      'b': 4,
+      'x': 4,
+      'y': 4,
+      'n': 4,
+      'pi': 2,
+      'ppl': 2,
+      'ret': 2,
+      'tau': 2,
+      'v': 2
+    },
     surfaces: [],
     measures: [],
 
@@ -218,28 +231,48 @@
         var error = false,
             input = null,
             name = null,
-            inputName = null;
+            inputName = null,
+            value = null,
+            itemCode = '';
 
         for (var i = 0; i < sF.globalColumnNames[code].length; i++) {
           name = sF.globalColumnNames[code][i];
           inputName = code + '-' + name;
-          input = document.getElementsByName(inputName)[0];
+          input = document.getElementsByName(inputName)[0],
+          value = input.value;
 
-          if ((sF.globalColumnNames[code][i] === 'code') || (sF.globalColumnNames[code][i] === 'name')) {
-            if (!input.value) {
-              error = true;
+          if (name == 'code') {
+            itemCode = value.toUpperCase();
+
+            if (code == 'measures') {
+              for (var j = 0; j < sF.measures.length; j++) {
+                if (itemCode == sF.measures[j]['code'].toUpperCase()) {
+                  error = true;
+                }
+              }
+            } else if (code == 'surfaces') {
+              for (var j = 0; j < sF.surfaces.length; j++) {
+                if (itemCode == sF.surfaces[j]['code'].toUpperCase()) {
+                  error = true;
+                }
+              }
             }
-          } else {
-            if ((!input.value) || (isNaN(input.value)) || (input.value == 0)) {
-              error = true;
-            }
+          }
+
+          ((!value) ? error = true : null);
+
+          if (input.type == 'number') {
+            ((isNaN(value)) ? error = true : null);
+            value = parseFloat(value);
+            (((input.min) && (value < input.min)) ? error = true : null);
+            (((input.max) && (value > input.max)) ? error = true : null);
           }
         }
 
         if (error === false) {
           return true;
         }
-        return false;
+        return false
       },
 
       validating: function(code) {
@@ -267,6 +300,8 @@
             inputValue = input.value;
             if (!isNaN(inputValue)) {
               inputValue = parseFloat(inputValue);
+            } else if (name == 'code') {
+              inputValue = inputValue.toUpperCase();
             }
             newObject[sF.globalColumnNames[code][i]] = inputValue;
           }
@@ -293,15 +328,100 @@
         input.setAttribute('name', inputName);
         //input.setAttribute('class', 'sf-main-box is--table-input is--name'); // TODO is on modal
 
-        if ((name === 'name') || (name === 'code')) {
-          input.setAttribute('type', 'text');
-          input.setAttribute('size', 16);
-        } else {
-          input.setAttribute('type', 'number');
-          input.setAttribute('step', '0.0001');
-          input.setAttribute('min', '0');
-          input.setAttribute('value', '0');
-          input.setAttribute('size', 6);
+        switch (name) {
+          case 'name':
+            input.setAttribute('type', 'text');
+            input.setAttribute('size', '16');
+            break;
+          case 'code':
+            input.setAttribute('type', 'text');
+            input.setAttribute('size', '4');
+            input.setAttribute('maxlength', '4');
+            break;
+          case 'k':
+            input.setAttribute('type', 'number');
+            input.setAttribute('min', '0.000000000001');
+            input.setAttribute('max', '1');
+            input.setAttribute('step', '0.000000000001');
+            input.setAttribute('size', '14');
+            break;
+          case 's':
+            input.setAttribute('type', 'number');
+            input.setAttribute('min', '0.000000000001');
+            input.setAttribute('max', '1');
+            input.setAttribute('step', '0.000000000001');
+            input.setAttribute('size', '14');
+            break;
+          case 'b':
+            input.setAttribute('type', 'number');
+            input.setAttribute('min', '1');
+            input.setAttribute('max', '2');
+            input.setAttribute('step', '0.0001');
+            input.setAttribute('value', '1.5');
+            input.setAttribute('size', '6');
+            break;
+          case 'x':
+            input.setAttribute('type', 'number');
+            input.setAttribute('min', '6');
+            input.setAttribute('max', '15');
+            input.setAttribute('step', '0.0001');
+            input.setAttribute('value', '10');
+            input.setAttribute('size', '6');
+            break;
+          case 'y':
+            input.setAttribute('type', 'number');
+            input.setAttribute('min', '0.35');
+            input.setAttribute('max', '0.7');
+            input.setAttribute('step', '0.0001');
+            input.setAttribute('value', '0.5');
+            input.setAttribute('size', '6');
+            break;
+          case 'n':
+            input.setAttribute('type', 'number');
+            input.setAttribute('min', '0.0001');
+            input.setAttribute('max', '1');
+            input.setAttribute('step', '0.0001');
+            input.setAttribute('value', '0.035');
+            input.setAttribute('size', '6');
+            break;
+          case 'pi':
+            input.setAttribute('type', 'number');
+            input.setAttribute('min', '0');
+            input.setAttribute('max', '100');
+            input.setAttribute('step', '0.05');
+            input.setAttribute('value', '0.2');
+            input.setAttribute('size', '6');
+            break;
+          case 'ppl':
+            input.setAttribute('type', 'number');
+            input.setAttribute('min', '0.05');
+            input.setAttribute('max', '1');
+            input.setAttribute('step', '0.05');
+            input.setAttribute('value', '0.5');
+            input.setAttribute('size', '6');
+            break;
+          case 'ret':
+            input.setAttribute('type', 'number');
+            input.setAttribute('min', '0');
+            input.setAttribute('max', '100');
+            input.setAttribute('step', '0.05');
+            input.setAttribute('value', '2');
+            input.setAttribute('size', '7');
+            break;
+          case 'tau':
+            input.setAttribute('type', 'number');
+            input.setAttribute('min', '0.01');
+            input.setAttribute('max', '10000');
+            input.setAttribute('step', '0.01');
+            input.setAttribute('size', '8');
+            break;
+          case 'v':
+            input.setAttribute('type', 'number');
+            input.setAttribute('min', '0.01');
+            input.setAttribute('max', '10');
+            input.setAttribute('step', '0.01');
+            input.setAttribute('size', '6');
+            break;
         }
 
         input.setAttribute('data-type', inputName);
@@ -897,9 +1017,19 @@
 
         input.setAttribute('type', 'number');
         input.setAttribute('name', inputName);
-        input.setAttribute('step', '0.1');
-        input.setAttribute('min', '0');
-        input.setAttribute('size', 8);
+
+        switch (column) {
+          case 'time':
+            input.setAttribute('step', '1');
+            input.setAttribute('min', '1');
+            break;
+          case 'rainfall':
+            input.setAttribute('step', '0.01');
+            input.setAttribute('min', '0.01');
+            break;
+        }
+
+        input.setAttribute('size', 6);
 
         input.addEventListener('input', function() {
           sF.rainfall.validatingUserValues();
@@ -992,9 +1122,9 @@
       setFiveteenInput: function() {
         sF.rainfall.fifteenInput.setAttribute('type', 'number');
         sF.rainfall.fifteenInput.setAttribute('name', 'fifteen-input');
-        sF.rainfall.fifteenInput.setAttribute('step', '0.1');
+        sF.rainfall.fifteenInput.setAttribute('step', '0.01');
         sF.rainfall.fifteenInput.setAttribute('min', '0');
-        sF.rainfall.fifteenInput.setAttribute('size', 8);
+        sF.rainfall.fifteenInput.setAttribute('size', 6);
       },
 
       setSetupButton: function(action) {
@@ -1497,13 +1627,6 @@
           actualMeasuresValue = actualMeasuresInput.value;
           actualSurfacesValue = actualSurfacesInput.value;
 
-          //actualRatioNumber = actualHeightValue / actualProjectionValue;
-          //if (!isNaN(actualRatioNumber)) {
-          //  actualRatioNumber = actualRatioNumber.toFixed(sF.placesInXml);
-          //  str = actualProjectionValue + ';' + actualHeightValue + ';' + actualMeasuresValue + ';' + actualSurfacesValue + ';' + actualRatioNumber + '\n';
-          //  retString += str;
-          //}
-
           if ((actualProjectionValue > 0) && (actualHeightValue>0) && (actualMeasuresValue != 'needSelect') && (actualSurfacesValue != 'needSelect')) {
             str = actualProjectionValue + ';' + actualHeightValue + ';' + actualMeasuresValue + ';' + actualSurfacesValue + '\n';
             retString += str;
@@ -1525,30 +1648,30 @@
           for (var j=0; j < sF.meSu.counters['measures']; j++) {
             if (!fifteen) {
               str = sF.surfaces[i]['code'] + sF.measures[j]['code'] + ';' +
-                    parseFloat(sF.surfaces[i]['k']).toFixed(sF.placesInXml) + ';' +
-                    parseFloat(sF.surfaces[i]['s']).toFixed(sF.placesInXml) + ';' +
-                    parseFloat(sF.measures[j]['n']).toFixed(sF.placesInXml) + ';' +
-                    parseFloat(sF.measures[j]['pi']).toFixed(sF.placesInXml) + ';' +
-                    parseFloat(sF.measures[j]['ppl']).toFixed(sF.placesInXml) + ';' +
-                    parseFloat(sF.measures[j]['ret']).toFixed(sF.placesInXml) + ';' +
-                    parseFloat(sF.surfaces[i]['b']).toFixed(2) + ';' +
-                    parseFloat(sF.surfaces[i]['x']).toFixed(0) + ';' +
-                    parseFloat(sF.surfaces[i]['y']).toFixed(2) + ';' +
-                    parseFloat(sF.measures[j]['tau']).toFixed(0) + ';' +
-                    parseFloat(sF.measures[j]['v']).toFixed(0) + '\n';
+                    parseFloat(sF.surfaces[i]['k']).toFixed(sF.nDecPlc['k']) + ';' +
+                    parseFloat(sF.surfaces[i]['s']).toFixed(sF.nDecPlc['s']) + ';' +
+                    parseFloat(sF.measures[j]['n']).toFixed(sF.nDecPlc['n']) + ';' +
+                    parseFloat(sF.measures[j]['pi']).toFixed(sF.nDecPlc['pi']) + ';' +
+                    parseFloat(sF.measures[j]['ppl']).toFixed(sF.nDecPlc['ppl']) + ';' +
+                    parseFloat(sF.measures[j]['ret']).toFixed(sF.nDecPlc['ret']) + ';' +
+                    parseFloat(sF.surfaces[i]['b']).toFixed(sF.nDecPlc['b']) + ';' +
+                    parseFloat(sF.surfaces[i]['x']).toFixed(sF.nDecPlc['x']) + ';' +
+                    parseFloat(sF.surfaces[i]['y']).toFixed(sF.nDecPlc['y']) + ';' +
+                    parseFloat(sF.measures[j]['tau']).toFixed(sF.nDecPlc['tau']) + ';' +
+                    parseFloat(sF.measures[j]['v']).toFixed(sF.nDecPlc['v']) + '\n';
             } else {
               str = sF.surfaces[i]['code'] + sF.measures[j]['code'] + ';' +
-                    parseFloat(sF.surfaces[i]['k']).toFixed(sF.placesInXml) + ';' +
+                    parseFloat(sF.surfaces[i]['k']).toFixed(sF.nDecPlc['k']) + ';' +
                     '0;' +
-                    parseFloat(sF.measures[j]['n']).toFixed(sF.placesInXml) + ';' +
+                    parseFloat(sF.measures[j]['n']).toFixed(sF.nDecPlc['n']) + ';' +
                     '0;' +
                     '0;' +
                     '0;' +
-                    parseFloat(sF.surfaces[i]['b']).toFixed(2) + ';' +
-                    parseFloat(sF.surfaces[i]['x']).toFixed(0) + ';' +
-                    parseFloat(sF.surfaces[i]['y']).toFixed(2) + ';' +
-                    parseFloat(sF.measures[j]['tau']).toFixed(0) + ';' +
-                    parseFloat(sF.measures[j]['v']).toFixed(0) + '\n';
+                    parseFloat(sF.surfaces[i]['b']).toFixed(sF.nDecPlc['b']) + ';' +
+                    parseFloat(sF.surfaces[i]['x']).toFixed(sF.nDecPlc['x']) + ';' +
+                    parseFloat(sF.surfaces[i]['y']).toFixed(sF.nDecPlc['y']) + ';' +
+                    parseFloat(sF.measures[j]['tau']).toFixed(sF.nDecPlc['tau']) + ';' +
+                    parseFloat(sF.measures[j]['v']).toFixed(sF.nDecPlc['v']) + '\n';
             }
 
             retString += str;
@@ -2016,11 +2139,11 @@
             newObj = {};
             newObj.name = surfacesEntries[0];
             newObj.code = surfacesEntries[1];
-            newObj.k = surfacesEntries[2];
-            newObj.s = surfacesEntries[3];
-            newObj.b = surfacesEntries[4];
-            newObj.x = surfacesEntries[5];
-            newObj.y = surfacesEntries[6];
+            newObj.k = parseFloat(surfacesEntries[2]).toFixed(sF.nDecPlc['k']);
+            newObj.s = parseFloat(surfacesEntries[3]).toFixed(sF.nDecPlc['s']);
+            newObj.b = parseFloat(surfacesEntries[4]).toFixed(sF.nDecPlc['b']);
+            newObj.x = parseFloat(surfacesEntries[5]).toFixed(sF.nDecPlc['x']);
+            newObj.y = parseFloat(surfacesEntries[6]).toFixed(sF.nDecPlc['y']);
 
             sF.surfaces.push(newObj);
           } else {
@@ -2035,12 +2158,12 @@
             newObj = {};
             newObj.name = measuresEntries[0];
             newObj.code = measuresEntries[1];
-            newObj.n = measuresEntries[2];
-            newObj.pi = measuresEntries[3];
-            newObj.ppl = measuresEntries[4];
-            newObj.ret = measuresEntries[5];
-            newObj.tau = measuresEntries[6];
-            newObj.v = measuresEntries[7];
+            newObj.n = parseFloat(measuresEntries[2]).toFixed(sF.nDecPlc['n']);
+            newObj.pi = parseFloat(measuresEntries[3]).toFixed(sF.nDecPlc['pi']);
+            newObj.ppl = parseFloat(measuresEntries[4]).toFixed(sF.nDecPlc['ppl']);
+            newObj.ret = parseFloat(measuresEntries[5]).toFixed(sF.nDecPlc['ret']);
+            newObj.tau = parseFloat(measuresEntries[6]).toFixed(sF.nDecPlc['tau']);
+            newObj.v = parseFloat(measuresEntries[7]).toFixed(sF.nDecPlc['v']);
 
             sF.measures.push(newObj);
           } else {
