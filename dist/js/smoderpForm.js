@@ -30,69 +30,6 @@
       'measures': ['name','code','n','pi','ppl','ret','tau','v'],
       'surfaces': ['name','code','k','s','b','x','y']
     },
-    globalData: {
-      'measures': {
-        0: {
-          'name': 'ms_non',
-          'code': 'NON',
-          'n': 0.035,
-          'pi': 1.1,
-          'ppl': 2.0,
-          'ret': 2.1,
-          'tau': 22.3,
-          'v': 0.27
-        },
-        1: {
-          'name': 'ms_geo',
-          'code': 'GEO',
-          'n': 0.0035,
-          'pi': 5,
-          'ppl': 0.2,
-          'ret': 2.9,
-          'tau': 259.3,
-          'v': 2.36
-        },
-        2: {
-          'name': 'ms_pvc',
-          'code': 'PVC',
-          'n': 0.25,
-          'pi': 0.1,
-          'ppl': 0.5,
-          'ret': 8.2,
-          'tau': 15.3,
-          'v': 8.2
-        }
-      },
-      'surfaces': {
-        0: {
-          'name': 'srf_clay',
-          'code': 'HH',
-          'k': 0.000000000001,
-          's': 0.000000000001,
-          'b': 0.52,
-          'x': 10.3,
-          'y': 15.1
-        },
-        1: {
-          'name': 'srf_clay_sandy',
-          'code': 'HP',
-          'k': 0.000000000001,
-          's': 0.000000000001,
-          'b': 0.52,
-          'x': 10.3,
-          'y': 15.1
-        },
-        2: {
-          'name': 'srf_usda',
-          'code': 'HUSD',
-          'k': 0.000000000001,
-          's': 0.000000000001,
-          'b': 0.52,
-          'x': 10.3,
-          'y': 15.1
-        }
-      }
-    },
     surfaces: [],
     measures: [],
 
@@ -1029,7 +966,7 @@
       },
 
       addNewUserValues: function() {
-          sF.userRainFalls.push([sF.rainfall.timeInput.value, sF.rainfall.rainfallInput.value]);
+          sF.userRainFalls.push([parseFloat(sF.rainfall.timeInput.value), parseFloat(sF.rainfall.rainfallInput.value)]);
           sF.rainfall.refillUserValues();
           sF.rainfall.setSetupButton('user');
           ((sF.debbuging) ? console.log('Info: Adding new user Values') : null);
@@ -1578,22 +1515,41 @@
 
       getSoilTypes: function() {
         var str = '',
-            retString = '';
+            retString = '',
+            fifteen = false,
+            rainfallSelect = document.getElementById('jsf-rainfall-select');
+
+        (((rainfallSelect) && (rainfallSelect.value === 'fifteen')) ? fifteen = true : fifteen = false);
 
         for (var i=0; i < sF.meSu.counters['surfaces']; i++) {
           for (var j=0; j < sF.meSu.counters['measures']; j++) {
-            str = sF.surfaces[i]['code'] + sF.measures[j]['code'] + ';' +
-                  parseFloat(sF.surfaces[i]['k']).toFixed(sF.placesInXml) + ';' +
-                  parseFloat(sF.surfaces[i]['s']).toFixed(sF.placesInXml) + ';' +
-                  parseFloat(sF.measures[j]['n']).toFixed(sF.placesInXml) + ';' +
-                  parseFloat(sF.measures[j]['pi']).toFixed(sF.placesInXml) + ';' +
-                  parseFloat(sF.measures[j]['ppl']).toFixed(sF.placesInXml) + ';' +
-                  parseFloat(sF.measures[j]['ret']).toFixed(sF.placesInXml) + ';' +
-                  parseFloat(sF.surfaces[i]['b']).toFixed(2) + ';' +
-                  parseFloat(sF.surfaces[i]['x']).toFixed(0) + ';' +
-                  parseFloat(sF.surfaces[i]['y']).toFixed(2) + ';' +
-                  parseFloat(sF.measures[j]['tau']).toFixed(0) + ';' +
-                  parseFloat(sF.measures[j]['v']).toFixed(0) + '\n';
+            if (!fifteen) {
+              str = sF.surfaces[i]['code'] + sF.measures[j]['code'] + ';' +
+                    parseFloat(sF.surfaces[i]['k']).toFixed(sF.placesInXml) + ';' +
+                    parseFloat(sF.surfaces[i]['s']).toFixed(sF.placesInXml) + ';' +
+                    parseFloat(sF.measures[j]['n']).toFixed(sF.placesInXml) + ';' +
+                    parseFloat(sF.measures[j]['pi']).toFixed(sF.placesInXml) + ';' +
+                    parseFloat(sF.measures[j]['ppl']).toFixed(sF.placesInXml) + ';' +
+                    parseFloat(sF.measures[j]['ret']).toFixed(sF.placesInXml) + ';' +
+                    parseFloat(sF.surfaces[i]['b']).toFixed(2) + ';' +
+                    parseFloat(sF.surfaces[i]['x']).toFixed(0) + ';' +
+                    parseFloat(sF.surfaces[i]['y']).toFixed(2) + ';' +
+                    parseFloat(sF.measures[j]['tau']).toFixed(0) + ';' +
+                    parseFloat(sF.measures[j]['v']).toFixed(0) + '\n';
+            } else {
+              str = sF.surfaces[i]['code'] + sF.measures[j]['code'] + ';' +
+                    parseFloat(sF.surfaces[i]['k']).toFixed(sF.placesInXml) + ';' +
+                    '0;' +
+                    parseFloat(sF.measures[j]['n']).toFixed(sF.placesInXml) + ';' +
+                    '0;' +
+                    '0;' +
+                    '0;' +
+                    parseFloat(sF.surfaces[i]['b']).toFixed(2) + ';' +
+                    parseFloat(sF.surfaces[i]['x']).toFixed(0) + ';' +
+                    parseFloat(sF.surfaces[i]['y']).toFixed(2) + ';' +
+                    parseFloat(sF.measures[j]['tau']).toFixed(0) + ';' +
+                    parseFloat(sF.measures[j]['v']).toFixed(0) + '\n';
+            }
 
             retString += str;
           }
@@ -1603,7 +1559,26 @@
       },
 
       getRainfall: function() {
-        return '30 60';
+        var rainfallSelect = document.getElementById('jsf-rainfall-select');
+
+        if (rainfallSelect) {
+          switch (rainfallSelect.value) {
+            case 'user':
+              var str = '';
+              for (var i = 1; i < sF.userRainFalls.length; i++) { // 1 ignore 0 0
+                str += sF.userRainFalls[i][0] + ' ' + sF.userRainFalls[i][1] + '\n';
+              }
+              return str;
+              break;
+            case 'fifteen':
+              return '15 ' + sF.fifteenRainFallValue;
+              break;
+            default:
+              console.log('Error: rainfall select contains bad value.');
+          }
+        }
+
+        return '';
       },
 
       createRequestXMLString: function() {
