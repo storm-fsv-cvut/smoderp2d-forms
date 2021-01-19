@@ -1499,6 +1499,7 @@
       button: null,
       statusLocation: null,
       timeout: null,
+      state: null,
       attempts: 0,
       delay: 3000,
 
@@ -1601,10 +1602,16 @@
         return retString;
       },
 
+      getRainfall: function() {
+        return '30 60';
+      },
+
       createRequestXMLString: function() {
-        var selectionsData = sF.postman.getSelectionsData();
-        var iniData = sF.postman.getIniData();
-        var soilTypes = sF.postman.getSoilTypes();
+        var selectionsData = sF.postman.getSelectionsData(),
+            iniData = sF.postman.getIniData(),
+            rainfall = sF.postman.getRainfall(),
+            soilTypes = sF.postman.getSoilTypes();
+
         var text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
           '\t<wps:Execute service="WPS" version="1.0.0" xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">\n' +
             '\t\t<ows:Identifier>smoderp1d</ows:Identifier>\n' +
@@ -1626,7 +1633,7 @@
               '\t\t\t<wps:Input>\n' +
                 '\t\t\t\t<ows:Identifier>rainfall</ows:Identifier>\n' +
                 '\t\t\t\t<wps:Data>\n' +
-                  '\t\t\t\t\t<wps:ComplexData mimeType="text/plain"><![CDATA[30 60]]></wps:ComplexData>\n' +
+                  '\t\t\t\t\t<wps:ComplexData mimeType="text/plain"><![CDATA[' + rainfall + ']]></wps:ComplexData>\n' +
                 '\t\t\t\t</wps:Data>\n' +
               '\t\t\t</wps:Input>\n' +
               '\t\t\t<wps:Input>\n' +
@@ -1789,11 +1796,13 @@
             processFailed = status.getElementsByTagName('wps:ProcessFailed');
 
         if (processFailed.length > 0) {
+          sF.postman.state = 'failed';
           sF.postman.processFailedResponse(xmlFile);
           return true;
         }
 
         if (processSucceeded.length > 0) {
+          sF.postman.state = 'succeeded';
           sF.postman.processFinalStatusResponse();
           setTimeout(function() {
             sF.postman.processSucceededResponse(xmlFile);
@@ -1802,8 +1811,8 @@
         }
 
         if (processAccepted.length > 0) {
+          sF.postman.state = 'accepted';
           sF.postman.processAcceptedResponse(xmlFile);
-
           sF.postman.timeout = setTimeout(function () {
             sF.postman.send(false);
           }, sF.postman.delay);
@@ -1812,8 +1821,8 @@
         }
 
         if (processStarted.length > 0) {
+          sF.postman.state = 'started';
           sF.postman.processStartedResponse(xmlFile);
-
           sF.postman.timeout = setTimeout(function () {
             sF.postman.send(false);
           }, sF.postman.delay);
@@ -1824,35 +1833,69 @@
         console.log('Error: a condition has arisen that should not be.');
       },
 
-      send: function(firstSending) {
-        var url = null,
-            requestXmlString = null;
+      sendErrorMail: function() {
+        // TODO communicate witch server endpoint to send error mail.
+      },
 
-        if (firstSending) {
-          ((sF.debbuging) ? console.log('Info: first sending; creating request XML and sending it to server (communicating with endpoint). Showing loader.') : null);
-          ((sF.loader.initialized) ? sF.loader.show(sF.loader.mainBox) : null);
-          url = sF.endpointUrl;
-          requestXmlString = sF.postman.createRequestXMLString();
-          sF.postman.attempts = 0;
-        } else {
-          ((sF.debbuging) ? console.log('Info: resending to the server (comunicating with status location). Attempt: ' + sF.postman.attempts) : null);
-          url = sF.postman.statusLocation;
-          sF.postman.attempts ++;
+      systemFaultEcho: function() {
+        sF.postman.sendErrorMail();
+        ((sF.debbuging) ? console.log('Info: system fault, showing error info in modal window.') : null);
+        ((sF.loader.initialized) ? sF.loader.quickHide(sF.loader.mainBox) : null);
+
+        var errorReport = document.getElementById('jsf-error-report');
+        if (errorReport) {
+          errorReport.innerHTML = 'Error: computer server not responding.';
+        }
+        var errorAnchorXML = document.getElementById('jsf-error-xmlswnl');
+        if (errorAnchorXML) {
+          var errorXML = sF.postman.lastRequestXML;
+              errorXMLUri = 'data:text/plain,' + encodeURIComponent(errorXML);
+          errorAnchorXML.href = errorXMLUri;
         }
 
-        var xhttp = new XMLHttpRequest();
-        xhttp.onreadystatechange = function() {
-          if ((xhttp.readyState == 4) && (xhttp.status == 200)) {
-            sF.postman.processResponse(xhttp.responseXML);
+        sF.modal.open('error');
+      },
+
+      send: function(firstSending) {
+        var fatalError = false;
+
+        if ((sF.postman.state == 'accepted') && (sF.postman.attempts > 20)) {
+          fatalError = true;
+        }
+
+        if (!fatalError) {
+          var url = null,
+              requestXmlString = null;
+
+          if (firstSending) {
+            sF.postman.state = '';
+            ((sF.debbuging) ? console.log('Info: first sending; creating request XML and sending it to server (communicating with endpoint). Showing loader.') : null);
+            ((sF.loader.initialized) ? sF.loader.show(sF.loader.mainBox) : null);
+            url = sF.endpointUrl;
+            requestXmlString = sF.postman.createRequestXMLString();
+            sF.postman.attempts = 0;
+          } else {
+            ((sF.debbuging) ? console.log('Info: resending to the server (comunicating with status location). Attempt: ' + sF.postman.attempts) : null);
+            url = sF.postman.statusLocation;
+            sF.postman.attempts++;
           }
-        };
-        if (firstSending) {
-          xhttp.open('POST', url, true);
-          xhttp.setRequestHeader('Content-Type', 'text/xml');
-          xhttp.send(requestXmlString);
+
+          var xhttp = new XMLHttpRequest();
+          xhttp.onreadystatechange = function() {
+            if ((xhttp.readyState == 4) && (xhttp.status == 200)) {
+              sF.postman.processResponse(xhttp.responseXML);
+            }
+          };
+          if (firstSending) {
+            xhttp.open('POST', url, true);
+            xhttp.setRequestHeader('Content-Type', 'text/xml');
+            xhttp.send(requestXmlString);
+          } else {
+            xhttp.open('GET', url, true);
+            xhttp.send();
+          }
         } else {
-          xhttp.open('GET', url, true);
-          xhttp.send();
+          sF.postman.systemFaultEcho();
         }
       },
 
