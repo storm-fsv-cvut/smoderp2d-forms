@@ -43,7 +43,7 @@
 
       <div class="sf-table-box">
         <table class="sf-table">
-          <tr class="sf-table-row is--not-highlighted"><td>
+          <tr id="jsf-rainfall-mainrow" class="sf-table-row is--not-highlighted jsf-invalid"><td>
             <select id="jsf-rainfall-select" name="rainfall-type">
               <option value="none" selected="true" disabled="true">Vyberte možnost</option>
               <option value="user">Uživatelská srážka</option>
@@ -52,6 +52,8 @@
             </select>
           </td><td>
             <div id="jsf-rainfall-setup" class="sf-button jsf-disabled">Nastavit</div>
+          </td><td>
+            <span class="jsf-status-cell"><span class="icon-checkmark"></span><span class="icon-cross"></span></span>
           </td></tr>
         </table>
       </div>

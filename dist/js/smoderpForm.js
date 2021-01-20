@@ -211,7 +211,6 @@
           sF.lastSelectToFirstOption();
         }
         sF.modal.opened = false;
-        sF.lastUsedSelect = null;
       },
 
       init: function() {
@@ -581,6 +580,7 @@
           if (sF.lastUsedSelect.name == 'rainfall-type') {
             sF.lastUsedSelect.value = sF.lastUsedSelect.getElementsByTagName('OPTION')[0].value;
             sF.rainfall.setSetupButton(false);
+            sF.rainfall.markRow(false);
           } else {
             var options = sF.lastUsedSelect.getElementsByTagName('OPTION'),
                 order = null;
@@ -936,7 +936,7 @@
           sF.section.addSelect(cell,'surfaces');
 
           cell = row.insertCell(6);
-          cell.innerHTML = '<span class="jsf-status-row"><span class="icon-checkmark"></span><span class="icon-cross"></span></span>';
+          cell.innerHTML = '<span class="jsf-status-cell"><span class="icon-checkmark"></span><span class="icon-cross"></span></span>';
 
           sF.addClass(row,'jsf-invalid');
 
@@ -1154,6 +1154,19 @@
         }
       },
 
+      markRow: function(valid) {
+        var rainfallMainrow = document.getElementById('jsf-rainfall-mainrow');
+        if (rainfallMainrow) {
+          if (valid) {
+            sF.addClass(rainfallMainrow, 'jsf-valid');
+            sF.removeClass(rainfallMainrow, 'jsf-invalid');
+          } else {
+            sF.addClass(rainfallMainrow, 'jsf-invalid');
+            sF.removeClass(rainfallMainrow, 'jsf-valid');
+          }
+        }
+      },
+
       init: function() {
         if (sF.rainfall.initialized === false) {
           sF.rainfall.mainSelect = document.getElementById('jsf-rainfall-select');
@@ -1183,11 +1196,15 @@
                           case 'user':
                             sF.modal.open('rainfall-user');
                             sF.rainfall.setSetupButton('user');
+                            sF.rainfall.markRow(true);
                             break;
                           case 'fifteen':
                             sF.modal.open('rainfall-fifteen');
                             sF.rainfall.setSetupButton('fifteen');
+                            sF.rainfall.markRow(true);
                             break;
+                          default:
+                            sF.rainfall.markRow(false);
                         }
                       } else {
                         console.log('Error: can\'t open modal window.');
@@ -1240,6 +1257,9 @@
                     sF.rainfall.setupButton.addEventListener('click', function() {
                       if (sF.hasClass(sF.rainfall.setupButton,'jsf-enabled')) {
                         var action = sF.rainfall.setupButton.getAttribute('data-action');
+
+                        ((!sF.lastUsedSelect) ? sF.lastUsedSelect = sF.rainfall.mainSelect : null);
+
                         switch (action) {
                           case 'user':
                             sF.modal.open('rainfall-user');
@@ -1808,6 +1828,7 @@
       },
 
       processFailedResponse: function(xmlFile) {
+        sF.lastUsedSelect = null;
         ((sF.debbuging) ? console.log('Info: process error response, showing error info in modal window.') : null);
         ((sF.loader.initialized) ? sF.loader.quickHide(sF.loader.mainBox) : null);
 
@@ -1954,6 +1975,7 @@
 
       reportError: function(type,viewXML) {
         var message = 'Error: a general error has occurred.';
+        sF.lastUsedSelect = null;
 
         switch (type) {
           case "systemFault":
