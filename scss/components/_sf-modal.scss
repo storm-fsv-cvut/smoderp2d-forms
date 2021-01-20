@@ -52,12 +52,23 @@ $modal-z-index: 900;
     overflow: hidden;
   }
 
+  &__cross {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    cursor: pointer;
+
+    &:active {
+      transform: scale(0.9);
+    }
+  }
+
   &__box {
     display: none;
+    box-sizing: border-box;
     background-color: white;
     border-radius: .5rem;
-    width: 80vw;
-    max-width: 1200px;
+    max-width: 94vw;
     padding: .6rem 1.2rem 3rem 1.2rem;
 
     &.jsf-closed {

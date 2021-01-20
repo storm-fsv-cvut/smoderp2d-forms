@@ -29,6 +29,10 @@
   color: lime;
   content: "\ea10"; }
 
+.icon-close:before {
+  color: rgba(0, 0, 0, 0.8);
+  content: "\ea0f"; }
+
 .sf-main-box.is--table-select {
   width: 10vw;
   min-width: 100px;
@@ -184,12 +188,19 @@
     z-index: 920;
     box-sizing: border-box;
     overflow: hidden; }
+  .sf-modal__cross {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    cursor: pointer; }
+    .sf-modal__cross:active {
+      transform: scale(0.9); }
   .sf-modal__box {
     display: none;
+    box-sizing: border-box;
     background-color: white;
     border-radius: .5rem;
-    width: 80vw;
-    max-width: 1200px;
+    max-width: 94vw;
     padding: .6rem 1.2rem 3rem 1.2rem; }
     .sf-modal__box.jsf-closed {
       display: none; }
