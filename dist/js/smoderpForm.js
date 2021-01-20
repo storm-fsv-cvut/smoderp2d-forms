@@ -211,6 +211,7 @@
           sF.lastSelectToFirstOption();
         }
         sF.modal.opened = false;
+        sF.lastUsedSelect = null;
       },
 
       init: function() {
@@ -588,6 +589,7 @@
             sF.lastUsedSelect.value = options[0].value;
             sF.section.isValid(order);
           }
+          sF.lastUsedSelect = null;
         }
       }
     },
@@ -680,8 +682,10 @@
 
         if (discrepancyFound) {
           sF.markRow(table,order,'invalid');
+          return false;
         } else {
           sF.markRow(table,order,'valid');
+          return true;
         }
       },
 
@@ -692,6 +696,18 @@
         for (var i = 1; i < rows.length; i++) { // ignore header row!
           sF.section.isValid(i);
         }
+      },
+
+      atLeastOneIsValid: function() {
+        var valid = false,
+            table = sF.section.mainTable,
+            rows = table.getElementsByTagName('TR');
+
+        for (var i = 1; i < rows.length; i++) { // ignore header row!
+          ((sF.section.isValid(i)) ? valid = true : null);
+        }
+
+        return valid;
       },
 
       setAllMinValues: function() {
@@ -1603,7 +1619,7 @@
         }
       },
 
-      getSelectionsData: function() {
+      getSectionsData: function() {
         var str = '',
             retString = '',
             actualProjectionInput = null,
@@ -1705,7 +1721,7 @@
       },
 
       createRequestXMLString: function() {
-        var selectionsData = sF.postman.getSelectionsData(),
+        var sectionsData = sF.postman.getSectionsData(),
             iniData = sF.postman.getIniData(),
             rainfall = sF.postman.getRainfall(),
             soilTypes = sF.postman.getSoilTypes();
@@ -1718,7 +1734,7 @@
                 '\t\t\t\t<ows:Identifier>input</ows:Identifier>\n' +
                 '\t\t\t\t<wps:Data>\n' +
                   '\t\t\t\t\t<wps:ComplexData mimeType="text/csv"><![CDATA[horizontalProjection[m];verticalDistance[m];surfaceProtection;soilType\n' +
-                  selectionsData + ']]></wps:ComplexData>\n' +
+                  sectionsData + ']]></wps:ComplexData>\n' +
                 '\t\t\t\t</wps:Data>\n' +
               '\t\t\t</wps:Input>\n' +
               '\t\t\t<wps:Input>\n' +
@@ -1814,6 +1830,7 @@
 
         var errorAnchorXML = document.getElementById('jsf-error-xmlswnl');
         if (errorAnchorXML) {
+          errorAnchorXML.style.display = 'block';
           var errorXML = sF.postman.lastRequestXML;
               errorXMLUri = 'data:text/plain,' + encodeURIComponent(errorXML);
           errorAnchorXML.href = errorXMLUri;
@@ -1935,20 +1952,40 @@
         // TODO communicate witch server endpoint to send error mail.
       },
 
-      systemFaultEcho: function() {
-        sF.postman.sendErrorMail();
-        ((sF.debbuging) ? console.log('Info: system fault, showing error info in modal window.') : null);
+      reportError: function(type,viewXML) {
+        var message = 'Error: a general error has occurred.';
+
+        switch (type) {
+          case "systemFault":
+            ((sF.debbuging) ? console.log('Info: system fault, showing error info in modal window.') : null);
+            sF.postman.sendErrorMail();
+            message = sF.dictionary.getValue('server_not_responding');
+          break;
+          case 'rainfallMissing':
+            message = sF.dictionary.getValue('rainfall_missing');
+          break;
+          case 'sectionMissing':
+            message = sF.dictionary.getValue('section_missing');
+          break;
+        }
+
         ((sF.loader.initialized) ? sF.loader.quickHide(sF.loader.mainBox) : null);
 
         var errorReport = document.getElementById('jsf-error-report');
         if (errorReport) {
-          errorReport.innerHTML = 'Error: computer server not responding.';
+          errorReport.innerHTML = message;
         }
+
         var errorAnchorXML = document.getElementById('jsf-error-xmlswnl');
         if (errorAnchorXML) {
-          var errorXML = sF.postman.lastRequestXML;
-              errorXMLUri = 'data:text/plain,' + encodeURIComponent(errorXML);
-          errorAnchorXML.href = errorXMLUri;
+          if (viewXML) {
+            errorAnchorXML.style.display = 'block';
+            var errorXML = sF.postman.lastRequestXML;
+                errorXMLUri = 'data:text/plain,' + encodeURIComponent(errorXML);
+            errorAnchorXML.href = errorXMLUri;
+          } else {
+            errorAnchorXML.style.display = 'none';
+          }
         }
 
         sF.modal.open('error');
@@ -1957,9 +1994,8 @@
       send: function(firstSending) {
         var fatalError = false;
 
-        if ((sF.postman.state == 'accepted') && (sF.postman.attempts > 20)) {
-          fatalError = true;
-        }
+        (((!sF.postman.state) && (sF.postman.attempts > 20)) ? fatalError = true : null);
+        (((sF.postman.state == 'accepted') && (sF.postman.attempts > 20)) ? fatalError = true : null);
 
         if (!fatalError) {
           var url = null,
@@ -1993,7 +2029,36 @@
             xhttp.send();
           }
         } else {
-          sF.postman.systemFaultEcho();
+          sF.postman.reportError('systemFault',true);
+        }
+      },
+
+      isSectionFilled: function() {
+        if (sF.section.atLeastOneIsValid()) {
+          return true;
+        }
+        return false;
+      },
+
+      isRainfallFilled: function() {
+        var rainfallSelect = document.getElementById('jsf-rainfall-select');
+        if ((rainfallSelect) && (rainfallSelect.value != 'none')) {
+          return true;
+        }
+        return false;
+      },
+
+      firstSending: function() {
+        if ((sF.postman.isRainfallFilled()) && (sF.postman.isSectionFilled())) {
+          sF.postman.send(true);
+        } else {
+          if (!sF.postman.isRainfallFilled()) {
+            sF.postman.reportError('rainfallMissing',false);
+          } else {
+            if (!sF.postman.isSectionFilled()) {
+              sF.postman.reportError('sectionMissing',false);
+            }
+          }
         }
       },
 
@@ -2002,7 +2067,7 @@
           sF.postman.button = document.getElementById('jsf-postman');
           if (sF.postman.button) {
             sF.postman.button.addEventListener('click', function() {
-              sF.postman.send(true);
+              sF.postman.firstSending();
             });
 
             sF.postman.initialized = true;
@@ -2063,7 +2128,7 @@
       },
 
       setDictionary: function() {
-        var text = '{"smoderp":"SMODERP","epizodni_model":"Epizodn\u00ed hydrologicko-erozn\u00ed model","ms_name":"N\u00e1zev","ms_code":"K\u00f3d","ms_roughness":"Drsnost podle Maninga","ms_captured":"Zachycen\u00e9 mno\u017estv\u00ed vody opat\u0159en\u00edm [mm]","ms_ratio":"Pom\u011br zachycen\u00ed [-]","ms_retention":"Povrchov\u00e1 retence [mm]","ms_tangential":"Maxim\u00e1ln\u00ed te\u010dn\u00e9 nap\u011bt\u00ed [Pa]","ms_maxspeed":"Maxim\u00e1ln\u00ed rychlost [m\/s)]","ms_non":"Bez opat\u0159en\u00ed","ms_geo":"Geotextilie","ms_pvc":"PVC","srf_name":"N\u00e1zev","srf_code":"K\u00f3d","srf_clay":"Hlinit\u00e1","srf_clay_sandy":"Hlinitop\u00eds\u010dit\u00e1","srf_usda":"Hlinin\u00e1 (USDA)","choose":"Vyberte","add_another":"P\u0159idej dal\u0161\u00ed","distinction":"Rozli\u0161en\u00ed","sim_length":"D\u00e9lka simnulace","maximum_dt":"Maxim\u00e1ln\u00ed dt","slope_width":"\u0160\u00ed\u0159ka svahu","rainfall":"Sr\u00e1\u017eka","choose_select":"Vyberte mo\u017enost","user_rainfall":"U\u017eivatelsk\u00e1 sr\u00e1\u017eka","max_fifteen_minutes":"Maxim\u00e1ln\u00ed 15ti minutov\u00fd d\u00e9\u0161t","rainfall_by_location":"V\u00fdb\u011br sr\u00e1\u017eky podle polohy","setup":"Nastavit","section_number":"\u010c\u00edslo \u00faseku","projection":"Pr\u016fm\u011bt [m]","height_meters":"V\u00fd\u0161ka [m]","ratio":"Pom\u011br","protective_measures":"Ochrann\u00e9 oprat\u0159en\u00ed","soil":"P\u016fda","add_row":"P\u0159idat \u0159\u00e1dek","count":"Spo\u010d\u00edtej","add_measures":"P\u0159idat vlastn\u00ed ochrann\u00e9 opat\u0159en\u00ed","add":"P\u0159idat","add_surface":"P\u0159idej vlastn\u00ed p\u016fdu","delete_all":"V\u0161e smazat","ok":"OK","fifteen_rain":"15ti minutov\u00fd d\u00e9\u0161\u0165","max_rain":"Maxim\u00e1ln\u00ed intenzita 15ti minutov\u00e9ho de\u0161t\u011b","general_data":"Obecn\u00e1 data","time_minutes":"\u010cas [min]","cumulative_deduction":"Kumulativn\u00ed sr\u00e1\u017eka [mm]"}';
+        var text = '{"smoderp":"SMODERP","epizodni_model":"Epizodn\u00ed hydrologicko-erozn\u00ed model","ms_name":"N\u00e1zev","ms_code":"K\u00f3d","ms_roughness":"Drsnost podle Maninga","ms_captured":"Zachycen\u00e9 mno\u017estv\u00ed vody opat\u0159en\u00edm [mm]","ms_ratio":"Pom\u011br zachycen\u00ed [-]","ms_retention":"Povrchov\u00e1 retence [mm]","ms_tangential":"Maxim\u00e1ln\u00ed te\u010dn\u00e9 nap\u011bt\u00ed [Pa]","ms_maxspeed":"Maxim\u00e1ln\u00ed rychlost [m\/s)]","ms_non":"Bez opat\u0159en\u00ed","ms_geo":"Geotextilie","ms_pvc":"PVC","srf_name":"N\u00e1zev","srf_code":"K\u00f3d","srf_clay":"Hlinit\u00e1","srf_clay_sandy":"Hlinitop\u00eds\u010dit\u00e1","srf_usda":"Hlinin\u00e1 (USDA)","choose":"Vyberte","add_another":"P\u0159idej dal\u0161\u00ed","distinction":"Rozli\u0161en\u00ed","sim_length":"D\u00e9lka simnulace","maximum_dt":"Maxim\u00e1ln\u00ed dt","slope_width":"\u0160\u00ed\u0159ka svahu","rainfall":"Sr\u00e1\u017eka","choose_select":"Vyberte mo\u017enost","user_rainfall":"U\u017eivatelsk\u00e1 sr\u00e1\u017eka","max_fifteen_minutes":"Maxim\u00e1ln\u00ed 15ti minutov\u00fd d\u00e9\u0161t","rainfall_by_location":"V\u00fdb\u011br sr\u00e1\u017eky podle polohy","setup":"Nastavit","section_number":"\u010c\u00edslo \u00faseku","projection":"Pr\u016fm\u011bt [m]","height_meters":"V\u00fd\u0161ka [m]","ratio":"Pom\u011br","protective_measures":"Ochrann\u00e9 oprat\u0159en\u00ed","soil":"P\u016fda","add_row":"P\u0159idat \u0159\u00e1dek","count":"Spo\u010d\u00edtej","add_measures":"P\u0159idat vlastn\u00ed ochrann\u00e9 opat\u0159en\u00ed","add":"P\u0159idat","add_surface":"P\u0159idej vlastn\u00ed p\u016fdu","delete_all":"V\u0161e smazat","ok":"OK","fifteen_rain":"15ti minutov\u00fd d\u00e9\u0161\u0165","max_rain":"Maxim\u00e1ln\u00ed intenzita 15ti minutov\u00e9ho de\u0161t\u011b","general_data":"Obecn\u00e1 data","time_minutes":"\u010cas [min]","cumulative_deduction":"Kumulativn\u00ed sr\u00e1\u017eka [mm]","sf_error_header":"Nastala chyba","back_to_form":"Zp\u011bt na formul\u00e1\u0159","download_profile_csv":"St\u00e1hnout Profile CSV","download_hydrograph_csv":"St\u00e1hnout Hydrograph CSV","download_wrong_xml":"St\u00e1hnout chybn\u00e9 XML","download_whole_xml":"St\u00e1hnout cel\u00e9 XML odpov\u011bdi","back_to_results":"Zp\u011bt na posledn\u00ed v\u00fdsledky","slope":"Svah","server_not_responding":"V\u00fdpo\u010detn\u00ed server neodpov\u00edd\u00e1.","rainfall_missing":"Nejsou vypln\u011bny de\u0161\u0165ov\u00e9 sr\u00e1\u017eky.","section_missing":"Nen\u00ed vypln\u011bn alespo\u0148 jeden \u00fasek."}';
         var dictionary = JSON.parse(text);
         sF.dictionary.processAndStartInit(dictionary);
       },
