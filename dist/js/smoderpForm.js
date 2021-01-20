@@ -1633,17 +1633,17 @@
             actualSurfacesValue = null;
 
         for (var i = 1; i < sF.section.counter; i++) {
-          actualProjectionInput = document.getElementsByName('projection-' + i)[0];
-          actualHeightInput = document.getElementsByName('height-' + i)[0];
-          actualMeasuresInput = document.getElementsByName('measures-' + i)[0];
-          actualSurfacesInput = document.getElementsByName('surfaces-' + i)[0];
+          if (sF.section.isValid(i)) {
+            actualProjectionInput = document.getElementsByName('projection-' + i)[0];
+            actualHeightInput = document.getElementsByName('height-' + i)[0];
+            actualMeasuresInput = document.getElementsByName('measures-' + i)[0];
+            actualSurfacesInput = document.getElementsByName('surfaces-' + i)[0];
 
-          actualProjectionValue = parseFloat(actualProjectionInput.value);
-          actualHeightValue = parseFloat(actualHeightInput.value);
-          actualMeasuresValue = actualMeasuresInput.value;
-          actualSurfacesValue = actualSurfacesInput.value;
+            actualProjectionValue = parseFloat(actualProjectionInput.value);
+            actualHeightValue = parseFloat(actualHeightInput.value);
+            actualMeasuresValue = actualMeasuresInput.value;
+            actualSurfacesValue = actualSurfacesInput.value;
 
-          if ((actualProjectionValue > 0) && (actualHeightValue>0) && (actualMeasuresValue != 'needSelect') && (actualSurfacesValue != 'needSelect')) {
             str = actualProjectionValue + ';' + actualHeightValue + ';' + actualMeasuresValue + ';' + actualSurfacesValue + '\n';
             retString += str;
           }
