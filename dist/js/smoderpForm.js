@@ -2211,7 +2211,7 @@
         '3D matrace spojená s výtužným prvkem;3DST;0.035;0.05;0.25;2;960;6.10\n' +
         'geomříž s prostorově uspořádány příčnými vlákny (vlnami);GeoT;0.035;0.05;0.25;2;5760;3.74\n' +
         'holá půda bez opatřebí;BAR;0.025;0;0;1;10.66;0.25\n' +
-        'plně zapojený travní porost - pravidelně sečený;GRA;0.03;0;0;0;28.7;1.80\n',
+        'plně zapojený travní porost - pravidelně sečený;GRA;0.03;1.0;0.25;2.0;28.7;1.8\n',
       init: function() {
         var allSurfacesTextLines = sF.loadDataTables.surfacesCsv.split('\n'),
             surfacesEntries = null,
