@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <wps:ExecuteResponse xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 ../wpsExecute_response.xsd" service="WPS" version="1.0.0" xml:lang="cs-CZ" serviceInstance="http://localhost/wps?request=GetCapabilities&amp;amp;service=WPS" statusLocation="">
     <wps:Process wps:processVersion="0.1">
-        <ows:Identifier>smoderp1d</ows:Identifier>
-        <ows:Title>Experimental SMODERP1D process</ows:Title>
+        <ows:Identifier>profile1d</ows:Identifier>
+        <ows:Title>Experimental PROFILE1D process</ows:Title>
         <ows:Abstract>Performs SMODERP2D distributed event-based model for surface and
 subsurface runoff and erosion
 (https://github.com/storm-fsv-cvut/smoderp2d) in 1D</ows:Abstract>
 	</wps:Process>
     <wps:Status creationTime="2020-10-29T21:06:07Z">
-        <wps:ProcessSucceeded>PyWPS Process Experimental SMODERP1D process finished</wps:ProcessSucceeded>
+        <wps:ProcessSucceeded>PyWPS Process Experimental PROFILE1D process finished</wps:ProcessSucceeded>
 	</wps:Status>
 	<wps:ProcessOutputs>
 		<wps:Output>

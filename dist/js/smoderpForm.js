@@ -1748,7 +1748,7 @@
 
         var text = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n' +
           '\t<wps:Execute service="WPS" version="1.0.0" xmlns:wps="http://www.opengis.net/wps/1.0.0" xmlns:ows="http://www.opengis.net/ows/1.1" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.opengis.net/wps/1.0.0 http://schemas.opengis.net/wps/1.0.0/wpsExecute_request.xsd">\n' +
-            '\t\t<ows:Identifier>smoderp1d</ows:Identifier>\n' +
+            '\t\t<ows:Identifier>profile1d</ows:Identifier>\n' +
             '\t\t<wps:DataInputs>\n' +
               '\t\t\t<wps:Input>\n' +
                 '\t\t\t\t<ows:Identifier>input</ows:Identifier>\n' +
